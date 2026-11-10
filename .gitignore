@@ -1,0 +1,30 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Icon
+
+# Environment, Secrets & Local Overrides
+.env
+.env.*
+*.local
+*.log
+
+# Editor & IDE Directories
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sublime-workspace
+*.sublime-project
+
+# Temporary & Cache Files
+temp/
+tmp/
+*.swp
+*~

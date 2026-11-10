@@ -1,0 +1,32 @@
+CHHATH MAHAPARV - Created by Abhinav Kumar
+==========================================
+This folder contains a complete static website. No installation, npm, or build is needed.
+
+MAC:
+  Double-click "Run Website.command". If macOS blocks the script, open Terminal,
+  cd into this folder, and run: python3 -m http.server 8000
+
+WINDOWS:
+  Double-click "Run Website.bat" (Python 3 required).
+
+LINUX:
+  In this folder, run: ./Run\ Website.sh
+
+ALL SYSTEMS:
+  While the local server runs, visit http://localhost:8000 in your browser.
+  To stop, close the terminal window or press Ctrl+C.
+
+TO CUSTOMIZE:
+  Open config.js in a text editor. Your name and own YouTube playlist URL are already there.
+
+TO PUBLISH:
+  Upload index.html, styles.css, app.js, config.js, assets/ and .nojekyll
+  to any HTTPS static hosting service (e.g., GitHub Pages or Netlify).
+
+IMPORTANT ABOUT YOUTUBE:
+  All 20 songs play from official YouTube recordings and need internet access.
+  YouTube may block embedding, individual videos, or autoplay; use the
+  "YouTube par seedhe sunen" link under the player when this happens.
+  Your supplied playlist link is prefilled but has not been verified as a valid playlist.
+
+This release is designed with care for the Chhath Mahaparv festival.

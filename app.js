@@ -1,0 +1,1052 @@
+(() => {
+  'use strict';
+  const config=window.CHHATH_SITE_CONFIG||{};
+  const songs=config.tracks||[];
+  const byId=(id)=>document.getElementById(id);
+  const all=(selector)=>[...document.querySelectorAll(selector)];
+  const clamp=(number,min,max)=>Math.max(min,Math.min(max,number));
+  const store={get:(key)=>{try{return localStorage.getItem(key)}catch{return null}},set:(key,value)=>{try{localStorage.setItem(key,value)}catch{}}};
+  const ui={song:byId('nowSong'),artist:byId('nowArtist'),notice:byId('playerNotice')};
+  const state={index:0,scene:'sandhya',playing:false,wantsPlay:false,mode:'curated',tab:'curated',youTube:null,youtubeReady:false,ytAPILoading:false,musicVol:clamp(Number(store.get('chhath-music-vol')??55),0,100),fxVol:clamp(Number(store.get('chhath-fx-vol')??25),0,100),speechVol:clamp(Number(store.get('chhath-voice-vol')??65),0,100),ambient:false,ambientContext:null,ambientNodes:null,lastSound:0,toastTimer:null,playlist:store.get('chhath-playlist')||config.publicPlaylistUrl||'',reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
+  const track=()=>songs[state.index]||songs[0];
+  const safeUrl=(value)=>{try{const u=new URL(value);return u.protocol==='https:'&&(u.hostname==='youtube.com'||u.hostname==='www.youtube.com'||u.hostname==='music.youtube.com')?u:null}catch{return null}};
+  const playlistId=(value)=>{const u=safeUrl(value);return u?(u.searchParams.get('list')||'').match(/^[A-Za-z0-9_-]{10,50}$/)?.[0]||null:null};
+  let toastTick=null;
+  function toast(msg){const n=byId('toast');if(!n)return;n.textContent=msg;n.classList.add('show');clearTimeout(toastTick);toastTick=setTimeout(()=>n.classList.remove('show'),3400)}
+  function updateMusic(){
+    ui.song.textContent=state.mode==='mine'?'आपकी YouTube playlist':track().title;
+    ui.artist.textContent=state.mode==='mine'?'Official YouTube playlist player':`${track().artist} · T-Series Bhakti Sagar`;
+    byId('nowSong').title=ui.song.textContent;
+    const symbol=state.playing?'Ⅱ':'▶';
+    for(const id of ['mainPlay','drawerPlay']){const button=byId(id);if(!button)continue;button.textContent=id==='drawerPlay'?(state.playing?'Ⅱ Pause':'▶ Play'):symbol;button.setAttribute('aria-label',state.playing?'गीत रोकें':'गीत सुनें')}
+    byId('playerDock').classList.toggle('is-playing',state.playing);
+    byId('watchYoutube').href=state.mode==='mine'?(state.playlist||config.publicPlaylistUrl):`https://www.youtube.com/watch?v=${track().videoId}&t=${track().start}s`;
+    const alt=byId('alternateYoutube');if(alt)alt.href=byId('watchYoutube').href;
+    renderSongs();
+  }
+  function setNotice(message){if(ui.notice)ui.notice.textContent=message}
+  function renderSongs(){
+    const search=(byId('songSearch')?.value||'').trim().toLocaleLowerCase();
+    const root=byId('songList');if(!root)return;root.replaceChildren();
+    let visible=0;
+    songs.forEach((s,i)=>{
+      if(search && !(`${s.title} ${s.artist} ${s.mood} ${i+1}`.toLocaleLowerCase().includes(search))) return;
+      visible++;
+      const b=document.createElement('button');b.className='song-row'+(i===state.index&&state.mode==='curated'?' active':'');b.type='button';b.setAttribute('aria-current',i===state.index&&state.mode==='curated'?'true':'false');
+      const num=document.createElement('span');num.className='song-num';num.textContent=String(i+1).padStart(2,'0');
+      const copy=document.createElement('span');copy.className='song-row-copy';const title=document.createElement('strong');title.textContent=s.title;const subtitle=document.createElement('small');subtitle.textContent=`${s.artist} · ${s.mood}`;copy.append(title,subtitle);
+      const mark=document.createElement('span');mark.className='song-row-play';mark.textContent=i===state.index&&state.mode==='curated'&&state.playing?'♫':'▶';b.append(num,copy,mark);
+      b.onclick=()=>chooseTrack(i,true);root.append(b);
+    });
+    if(!visible){const p=document.createElement('p');p.className='empty-search';p.textContent='इस खोज के लिए कोई गीत नहीं मिला।';root.append(p)}
+  }
+  function renderPreview(){const target=byId('songPreview');if(!target)return;target.replaceChildren();songs.slice(0,6).forEach((s,i)=>{
+    const b=document.createElement('button');b.className='song-preview-item';b.type='button';b.onclick=()=>{openDrawer('music');chooseTrack(i,true)};
+    const n=document.createElement('span');n.className='preview-num';n.textContent=String(i+1).padStart(2,'0');const text=document.createElement('span');text.className='preview-title';const t=document.createElement('strong');t.textContent=s.title;const a=document.createElement('small');a.textContent=s.artist;text.append(t,a);
+    const end=document.createElement('span');end.className='preview-end';end.textContent='सुनें ↗';b.append(n,text,end);target.append(b);
+  })}
+  const drawer=byId('musicDrawer'),settings=byId('settingsPanel'),backdrop=byId('drawerBackdrop');
+  let lastFocus=null;
+  function openDrawer(type){lastFocus=document.activeElement;closePanels(false);const el=type==='sound'?settings:drawer;el.classList.add('open');el.setAttribute('aria-hidden','false');backdrop.hidden=false;document.body.classList.add('panel-open');(el.querySelector('.drawer-close')||el).focus();}
+  function closePanels(restore=true){[drawer,settings].forEach(el=>{el.classList.remove('open');el.setAttribute('aria-hidden','true')});backdrop.hidden=true;document.body.classList.remove('panel-open');if(restore&&lastFocus?.isConnected)lastFocus.focus()}
+  byId('closeDrawer').onclick=()=>closePanels();byId('closeSettings').onclick=()=>closePanels();backdrop.onclick=()=>closePanels();
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!backdrop.hidden)closePanels();if(e.key==='Tab'&&!backdrop.hidden){const panel=settings.classList.contains('open')?settings:drawer;const focusables=[...panel.querySelectorAll('button:not([disabled]),a[href],input:not([disabled])')].filter(x=>x.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+  function libraryTab(tab){state.tab=tab;all('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));byId('curatedSection').hidden=tab!=='curated';byId('yoursSection').hidden=tab!=='yours'}
+  all('[data-tab]').forEach(b=>b.onclick=()=>libraryTab(b.dataset.tab));
+  byId('dockLibrary').onclick=()=>{openDrawer('music');libraryTab('curated')};byId('openPlaylist').onclick=()=>{openDrawer('music');libraryTab('curated')};
+  if(byId('openSoundSettings')) byId('openSoundSettings').onclick=()=>openDrawer('sound');
+  byId('soundBtn').onclick=()=>openDrawer('music');
+  byId('songSearch').addEventListener('input',renderSongs);
+  let ytPromise=null;
+  function whenYtReady(){
+    if(window.YT?.Player) return Promise.resolve(true);
+    if(ytPromise) return ytPromise;
+    ytPromise=new Promise(resolve=>{
+      let done=false;
+      const complete=ok=>{if(done)return;done=true;clearTimeout(timer);if(!ok)ytPromise=null;resolve(ok)};
+      const timer=setTimeout(()=>complete(Boolean(window.YT?.Player)),9500);
+      const script=document.createElement('script');script.src='https://www.youtube.com/iframe_api';script.async=true;
+      script.onerror=()=>complete(false);
+      window.onYouTubeIframeAPIReady=()=>complete(Boolean(window.YT?.Player));
+      document.head.append(script);
+    });
+    return ytPromise;
+  }
+  function removeYT(){if(state.youTube){try{state.youTube.destroy()}catch{}state.youTube=null}}
+  function loadCurated(index,autoplay=true){
+    state.mode='curated';state.index=(index+songs.length)%songs.length;state.wantsPlay=autoplay;
+    updateMusic();openIfNeeded();
+    byId('youtubeMount').replaceChildren();removeYT();
+    const holder=document.createElement('div');holder.id='youtubePlayer';byId('youtubeMount').append(holder);
+    setNotice('आधिकारिक YouTube player लोड हो रहा है…');
+    whenYtReady().then(ok=>{
+      if(state.mode!=='curated'||document.getElementById('youtubePlayer')!==holder)return;
+      if(!ok){fallbackIframe(track());return}
+      const playingTrack=track();
+      state.youTube=new YT.Player('youtubePlayer',{height:'240',width:'425',videoId:playingTrack.videoId,
+        playerVars:{playsinline:1,rel:0,modestbranding:1,start:playingTrack.start,enablejsapi:1,origin:location.origin.startsWith('http')?location.origin:undefined},
+        events:{onReady:e=>{try{e.target.setVolume(state.musicVol);e.target.loadVideoById({videoId:playingTrack.videoId,startSeconds:playingTrack.start,...(playingTrack.end?{endSeconds:playingTrack.end}: {})});if(!state.wantsPlay)e.target.pauseVideo()}catch{}setNotice('YouTube player तैयार है। ▶ नहीं चलता हो तो वीडियो के अंदर Play दबाएँ या नीचे YouTube link खोलें।')},
+                onStateChange:e=>{if(state.mode!=='curated')return;const Y=window.YT.PlayerState;if(e.data===Y.PLAYING){state.playing=true;updateMusic()}else if(e.data===Y.PAUSED){state.playing=false;updateMusic()}else if(e.data===Y.ENDED){state.playing=false;changeSong(1,true)}},
+                onAutoplayBlocked:()=>{state.playing=false;updateMusic();setNotice('Browser ने autoplay रोक दिया है। कृपया player पर Play दबाएँ।')},
+                onError:e=>{state.playing=false;updateMusic();setNotice('इस गीत को यहाँ चलाने की अनुमति नहीं है। नीचे सीधे YouTube पर सुनें।')}}});
+    });
+  }
+  function fallbackIframe(s){const mount=byId('youtubeMount');mount.replaceChildren();const frame=document.createElement('iframe');frame.title=`${s.title} official YouTube recording`;frame.allow='autoplay; encrypted-media; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.src=`https://www.youtube-nocookie.com/embed/${s.videoId}?start=${s.start}${s.end?`&end=${s.end}`:''}&autoplay=${state.wantsPlay?1:0}&playsinline=1`;mount.append(frame);state.playing=false;updateMusic();setNotice('YouTube controls के साथ गीत सुनें। यदि player न खुले तो YouTube लिंक इस्तेमाल करें।')}
+  function chooseTrack(index,autoplay=true){openDrawer('music');libraryTab('curated');loadCurated(index,autoplay)}
+  function openIfNeeded(){if(!drawer.classList.contains('open'))openDrawer('music')}
+  function changeSong(delta,autoplay=true){if(state.mode==='mine'){toast('आपकी playlist में अगले गीत के लिए YouTube player के controls इस्तेमाल करें।');return}chooseTrack(state.index+delta,autoplay)}
+  function toggleMusic(){
+    openDrawer('music');
+    if(state.mode==='mine'){toast('अपनी playlist को YouTube player के Play button से चलाएँ।');return}
+    if(!state.youTube){chooseTrack(state.index,true);return}
+    try{const now=state.youTube.getPlayerState();if(now===YT.PlayerState.PLAYING)state.youTube.pauseVideo();else state.youTube.playVideo()}catch{chooseTrack(state.index,true)}
+  }
+  for(const id of ['mainPlay','drawerPlay','startMusic'])byId(id).addEventListener('click',toggleMusic);
+  for(const id of ['prevSong','drawerPrev'])byId(id).onclick=()=>changeSong(-1);
+  for(const id of ['nextSong','drawerNext'])byId(id).onclick=()=>changeSong(1);
+  setInterval(()=>{if(state.mode!=='curated'||!state.youTube||!state.playing)return;const t=track();if(!t.end)return;try{if(state.youTube.getCurrentTime()>=t.end-.4)changeSong(1,true)}catch{}},550);
+  const loadMyPlaylist=()=>{const input=byId('playlistInput').value.trim(),id=playlistId(input);
+    if(!id){toast('कृपया सही YouTube playlist URL दें, जिसमें list=... हो।');return}
+    state.playlist=input;store.set('chhath-playlist',input);state.mode='mine';state.playing=false;state.wantsPlay=true;removeYT();
+    const mount=byId('youtubeMount');mount.replaceChildren();const frame=document.createElement('iframe');frame.title='Your YouTube music playlist';frame.allow='autoplay; encrypted-media; picture-in-picture';frame.referrerPolicy='strict-origin-when-cross-origin';frame.allowFullscreen=true;frame.src=`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(id)}&autoplay=1&playsinline=1&rel=0`;mount.append(frame);
+    byId('playlistOpenExternal').href=(safeUrl(input)?.href)||config.publicPlaylistUrl;updateMusic();setNotice('आपकी playlist YouTube पर उपलब्ध और public/unlisted होने पर ही चलेगी। Spotify/YouTube Music account sync नहीं होता।');toast('आपकी playlist लिंक सेट कर दिया गया है।');
+  };
+  byId('loadMyPlaylist').onclick=loadMyPlaylist;
+  byId('playlistInput').value=state.playlist;
+  byId('playlistOpenExternal').href=(safeUrl(state.playlist)?.href)||config.publicPlaylistUrl;
+  byId('playlistInput').addEventListener('input',e=>{const url=safeUrl(e.target.value);if(url)byId('playlistOpenExternal').href=url.href});
+  function volumeApply(music,fx,voice){
+    if(music!==undefined){state.musicVol=clamp(Number(music),0,100);byId('musicVol').value=String(state.musicVol);byId('settingsMusicVol').value=String(state.musicVol);byId('musicVolValue').textContent=`${state.musicVol}%`;store.set('chhath-music-vol',String(state.musicVol));try{state.youTube?.setVolume(state.musicVol)}catch{}}
+    if(fx!==undefined){state.fxVol=clamp(Number(fx),0,100);byId('fxVol').value=String(state.fxVol);byId('fxVolValue').textContent=`${state.fxVol}%`;store.set('chhath-fx-vol',String(state.fxVol));updateAmbienceGain()}
+    if(voice!==undefined){state.speechVol=clamp(Number(voice),0,100);byId('speechVol').value=String(state.speechVol);byId('speechVolValue').textContent=`${state.speechVol}%`;store.set('chhath-voice-vol',String(state.speechVol))}
+  }
+  byId('musicVol').oninput=e=>volumeApply(e.target.value);byId('settingsMusicVol').oninput=e=>volumeApply(e.target.value);
+  byId('fxVol').oninput=e=>volumeApply(undefined,e.target.value);byId('speechVol').oninput=e=>volumeApply(undefined,undefined,e.target.value);
+  volumeApply(state.musicVol,state.fxVol,state.speechVol);
+  function createAudio(){try{if(!state.ambientContext){state.ambientContext=new(window.AudioContext||window.webkitAudioContext)()}if(state.ambientContext.state==='suspended'){state.ambientContext.resume()}return state.ambientContext}catch{return null}}
+  function tone(freq,duration,kind='sine',gain=.1,when=0,octave=null){const ctx=createAudio();if(!ctx||!state.fxVol)return;const osc=ctx.createOscillator(),g=ctx.createGain();osc.type=kind;osc.frequency.setValueAtTime(freq,ctx.currentTime+when);if(octave)osc.frequency.exponentialRampToValueAtTime(octave,ctx.currentTime+when+duration*.75);const level=Math.min(.14,gain)*state.fxVol/100;g.gain.setValueAtTime(.0001,ctx.currentTime+when);g.gain.exponentialRampToValueAtTime(Math.max(.0002,level),ctx.currentTime+when+.035);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+when+duration);osc.connect(g);g.connect(ctx.destination);osc.start(ctx.currentTime+when);osc.stop(ctx.currentTime+when+duration+.02)}
+  function bell(){[660,990,1320,1760].forEach((f,i)=>tone(f,1.7,'sine',.095/(i+1),i*.009));toast('🔔 मंदिर की मधुर घंटी')}
+  
+  // --- Central Festive Audio Controller (One at a time, Strict Toggle on/off, No overlapping cacophony) ---
+  let activeFestiveAudio = null;
+  let activeFestiveId = null;
+  let activeFestiveResetFn = null;
+
+  function stopActiveFestiveAudio(notify=false){
+    if(activeFestiveAudio){
+      try{
+        activeFestiveAudio.pause();
+        activeFestiveAudio.currentTime = 0;
+      }catch{}
+      activeFestiveAudio = null;
+    }
+    if(typeof activeFestiveResetFn === 'function'){
+      try{ activeFestiveResetFn(); }catch{}
+      activeFestiveResetFn = null;
+    }
+    if(notify && activeFestiveId){
+      toast('ध्वनि बंद कर दी गई।');
+    }
+    activeFestiveId = null;
+  }
+
+  function playFestiveAudio(id, fileUrl, volumeScale=1.0, onStart=null, onEnd=null){
+    // 1. Toggle Check: Clicking the same sound while it's playing stops it immediately
+    if(activeFestiveId === id){
+      stopActiveFestiveAudio(true);
+      return false;
+    }
+
+    // 2. Mutual Exclusion: Stop any other festive sound immediately (max 1 foreground sound)
+    stopActiveFestiveAudio(false);
+
+    try{
+      const audio = new Audio(fileUrl);
+      const vol = Math.min(1.0, Math.max(0.01, ((state.fxVol || 80) / 100) * volumeScale));
+      audio.volume = vol;
+      audio.loop = false; // strictly one play, stops automatically!
+
+      activeFestiveAudio = audio;
+      activeFestiveId = id;
+      activeFestiveResetFn = onEnd;
+
+      audio.onended = () => {
+        stopActiveFestiveAudio(false);
+      };
+      audio.onerror = () => {
+        stopActiveFestiveAudio(false);
+      };
+
+      audio.play().catch(e => {
+        console.warn('Playback error', e);
+        stopActiveFestiveAudio(false);
+      });
+
+      if(typeof onStart === 'function') onStart();
+      return true;
+    }catch(e){
+      stopActiveFestiveAudio(false);
+      return false;
+    }
+  }
+
+  // --- Authentic Festive Effects (with Toggle Support) ---
+  function toggleRocketCracker(){
+    const btn = byId('rocketCrackerBtn');
+    playFestiveAudio(
+      'rocket',
+      'assets/audio/rocket.m4a',
+      1.0,
+      () => {
+        btn?.classList.add('is-playing');
+        launchRocketAnimation();
+        toast('🚀 रॉकेट आतिशबाज़ी • घाट से गगनभेदी उड़ान!');
+      },
+      () => {
+        btn?.classList.remove('is-playing');
+      }
+    );
+  }
+
+  function toggleBombCracker(){
+    const btn = byId('bombCrackerBtn');
+    playFestiveAudio(
+      'bomb',
+      'assets/audio/bomb.m4a',
+      1.0,
+      () => {
+        btn?.classList.add('is-playing');
+        fireworks();
+        toast('💥 छठ बम व लड़ी • गूँजता जोरदार धमाका!');
+      },
+      () => {
+        btn?.classList.remove('is-playing');
+      }
+    );
+  }
+
+  function toggleConchSound(){
+    const btn = byId('shankhSoundBtn');
+    playFestiveAudio(
+      'shankh',
+      'assets/audio/shankh.m4a',
+      1.0,
+      () => {
+        btn?.classList.add('is-playing');
+        toast('🐚 पावन शंखनाद — जय छठी मैया!');
+      },
+      () => {
+        btn?.classList.remove('is-playing');
+      }
+    );
+  }
+
+  function broadcastAnnouncement(customText){
+    const btn = byId('loudspeakerAnnounceBtn');
+    if(activeFestiveId === 'loudspeaker'){
+      if('speechSynthesis' in window) window.speechSynthesis.cancel();
+      stopActiveFestiveAudio(true);
+      btn?.classList.remove('is-playing');
+      return;
+    }
+
+    stopActiveFestiveAudio(false);
+    btn?.classList.add('is-playing');
+
+    const text = (customText || byId('customAnnounceInput')?.value || '').trim() ||
+      "सभी श्रद्धालु माताओं एवं बहनों से निवेदन है कि कृपया गंगा घाट को स्वच्छ रखें, गहरे पानी में न जाएँ और बच्चों का ध्यान रखें। जय छठी मैया!";
+
+    const ctx = createAudio();
+    const now = ctx ? ctx.currentTime : 0;
+    const vol = (state.speechVol || 80) / 100;
+
+    activeFestiveId = 'loudspeaker';
+    activeFestiveResetFn = () => {
+      btn?.classList.remove('is-playing');
+      if('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+
+    // 1. Temple chime
+    if(ctx){
+      const chime = ctx.createOscillator();
+      const g = ctx.createGain();
+      chime.type = 'sine';
+      chime.frequency.setValueAtTime(784, now);
+      g.gain.setValueAtTime(0.001, now);
+      g.gain.exponentialRampToValueAtTime(0.24 * ((state.fxVol || 80) / 100), now + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      chime.connect(g);
+      g.connect(ctx.destination);
+      chime.start(now);
+      chime.stop(now + 0.42);
+
+      const chime2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      chime2.type = 'sine';
+      chime2.frequency.setValueAtTime(1046.5, now + 0.38);
+      g2.gain.setValueAtTime(0.001, now + 0.38);
+      g2.gain.exponentialRampToValueAtTime(0.28 * ((state.fxVol || 80) / 100), now + 0.42);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+      chime2.connect(g2);
+      g2.connect(ctx.destination);
+      chime2.start(now + 0.38);
+      chime2.stop(now + 0.9);
+    }
+
+    toast('📣 घाट लाउडस्पीकर उद्घोष प्रसारित हो रहा है...');
+
+    // 2. Hindi Devotional Announcement
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'hi-IN';
+      utterance.rate = 0.92;
+      utterance.pitch = 1.04;
+      utterance.volume = vol;
+
+      const voices = window.speechSynthesis.getVoices();
+      const hindiVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi') || v.name.toLowerCase().includes('lekha'));
+      if(hindiVoice) utterance.voice = hindiVoice;
+
+      utterance.onend = () => {
+        stopActiveFestiveAudio(false);
+      };
+      utterance.onerror = () => {
+        stopActiveFestiveAudio(false);
+      };
+
+      setTimeout(() => {
+        try{ window.speechSynthesis.speak(utterance); }catch{ stopActiveFestiveAudio(false); }
+      }, 750);
+    } else {
+      setTimeout(() => stopActiveFestiveAudio(false), 4000);
+    }
+  }
+
+  function conch(){ toggleConchSound(); }
+  function fxNoise(duration=.2,level=.02){const ctx=createAudio();if(!ctx||state.fxVol===0)return;const buffer=ctx.createBuffer(1,Math.max(1,Math.floor(ctx.sampleRate*duration)),ctx.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.5;const source=ctx.createBufferSource();source.buffer=buffer;const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=500;const g=ctx.createGain();g.gain.setValueAtTime(level*state.fxVol/100,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+duration);source.connect(filter);filter.connect(g);g.connect(ctx.destination);source.start()}
+  function createAmbience(){if(state.ambientNodes)return;const ctx=createAudio();if(!ctx)return;const source=ctx.createBufferSource();const buffer=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),data=buffer.getChannelData(0);let last=0;for(let i=0;i<data.length;i++){last=last*.994+(Math.random()-.5)*.006;data[i]=last*.3}source.buffer=buffer;source.loop=true;const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=380;const gain=ctx.createGain();gain.gain.value=0;source.connect(filter);filter.connect(gain);gain.connect(ctx.destination);source.start();state.ambientNodes={source,gain};updateAmbienceGain()}
+  function updateAmbienceGain(){if(state.ambientNodes){const g=state.ambientNodes.gain.gain;g.setTargetAtTime(state.ambient?state.fxVol/100*.27:0,state.ambientContext.currentTime,.15)}}
+  byId('ambientToggle').onchange=e=>{state.ambient=e.target.checked;if(state.ambient)createAmbience();updateAmbienceGain();toast(state.ambient?'नदी की हल्की आवाज़ चालू है।':'पृष्ठभूमि की आवाज़ बंद है।')};
+
+  const SCENE_KEYS = ['sandhya', 'usha', 'koshi', 'fireworks', 'arpan'];
+  function scene(name){
+    if(!config.scenes[name])return;
+    state.scene=name;
+    document.body.dataset.scene=name;
+    all('[data-scene-btn]').forEach(b=>{
+      const active=b.dataset.sceneBtn===name;
+      b.classList.toggle('is-active',active);
+      b.setAttribute('aria-pressed',String(active));
+    });
+    const idx = SCENE_KEYS.indexOf(name) + 1;
+    const foot=document.querySelector('.scene-foot');
+    if(foot) foot.textContent=`SCENES · 0${idx || 1} / 05`;
+    updateFestivalStatus();
+    toast(config.scenes[name].label+' • '+config.scenes[name].message);
+    if(name==='koshi'){for(let i=0;i<5;i++)setTimeout(addDiya,i*220)}
+    if(name==='fireworks'){fireworks();setTimeout(fireworks,600)}
+    if(name==='arpan'){arghya()}
+  }
+  all('[data-scene-btn]').forEach(b=>b.onclick=()=>scene(b.dataset.sceneBtn));
+
+  let liveDevoteeCount = 18 + Math.floor(Math.random() * 5);
+  function updateDevoteeCount(){
+    const drift = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+    liveDevoteeCount = clamp(liveDevoteeCount + drift, 16, 28);
+    updateFestivalStatus();
+  }
+  function updateFestivalStatus(){
+    const textEl = byId('ambienceText');
+    if(textEl) textEl.textContent = `${liveDevoteeCount} श्रद्धालु लाइव जुड़े हैं`;
+  }
+  setInterval(updateDevoteeCount, 60000); // Updated once every 1 minute
+
+  function addDiya(){
+    const parent=byId('floatingDiyas');
+    if(!parent)return;
+    const d=document.createElement('div');
+    d.className='floating-diya';
+    d.style.left=`${18+Math.random()*72}%`;
+    d.style.setProperty('--dur',`${11+Math.random()*8}s`);
+    parent.append(d);
+    d.addEventListener('animationend',()=>d.remove(),{once:true});
+    setTimeout(()=>d.remove(),21000);
+  }
+  function diya(){
+    for(let i=0;i<4;i++)setTimeout(addDiya,i*220);
+    toast('🪔 गंगा में दीपदान संपन्न • छठी मैया सबका कल्याण करें');
+  }
+  function arghya(){
+    const el=byId('arghyaEffect');
+    if(el){
+      el.classList.remove('active');
+      void el.offsetWidth;
+      el.classList.add('active');
+      setTimeout(()=>el.classList.remove('active'),2900);
+    }
+    toast('☀ भगवान सूर्य को श्रद्धापूर्वक पावन अर्घ्य अर्पित');
+  }
+
+  const canvas=byId('effectsCanvas'),ctx2=canvas.getContext('2d');
+  let particles=[],rockets=[],frameId=0;
+  function resizeCanvas(){
+    const rect=canvas.getBoundingClientRect();
+    canvas.width=Math.round(rect.width*Math.min(devicePixelRatio||1,2));
+    canvas.height=Math.round(rect.height*Math.min(devicePixelRatio||1,2));
+    ctx2.setTransform(canvas.width/rect.width,0,0,canvas.height/rect.height,0,0);
+  }
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+  function animateFx(){
+    const w=canvas.width/Math.min(devicePixelRatio||1,2),h=canvas.height/Math.min(devicePixelRatio||1,2);
+    ctx2.clearRect(0,0,w,h);
+
+    // Update & draw flying rockets
+    rockets=rockets.filter(r=>r.progress<1);
+    for(const r of rockets){
+      r.progress+=1/r.duration;
+      const ease=1-Math.pow(1-r.progress,2);
+      r.x=r.startX+(r.targetX-r.startX)*r.progress;
+      r.y=r.startY+(r.targetY-r.startY)*ease;
+
+      // Glowing rocket head
+      ctx2.beginPath();
+      ctx2.arc(r.x,r.y,3.5,0,Math.PI*2);
+      ctx2.fillStyle='#fff';
+      ctx2.shadowColor='#ffca28';
+      ctx2.shadowBlur=14;
+      ctx2.fill();
+      ctx2.shadowBlur=0;
+
+      // Trailing sparks & smoke
+      for(let s=0;s<4;s++){
+        particles.push({
+          x:r.x+(Math.random()-.5)*5,
+          y:r.y+Math.random()*9,
+          vx:(Math.random()-.5)*1.4,
+          vy:Math.random()*2.8+1.2,
+          life:.75,
+          decay:.04,
+          size:Math.random()*2.2+1,
+          color:Math.random()>.3?'#ffb300':'#ff3d00'
+        });
+      }
+
+      if(r.progress>=1){
+        explodeRocket(r.targetX,r.targetY);
+      }
+    }
+
+    // Update & draw explosion particles
+    particles=particles.filter(p=>p.life>0);
+    for(const p of particles){
+      p.x+=p.vx;p.y+=p.vy;
+      p.vy+=.032; // gravity
+      p.vx*=.988; // air drag
+      p.life-=(p.decay||.015);
+      ctx2.globalAlpha=Math.max(0,p.life);
+      ctx2.fillStyle=p.color;
+      ctx2.beginPath();
+      ctx2.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx2.fill();
+    }
+    ctx2.globalAlpha=1;
+    if(particles.length||rockets.length)frameId=requestAnimationFrame(animateFx);else frameId=0;
+  }
+
+  function launchRocketAnimation(){
+    if(state.reducedMotion)return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    const sx=w*(.35+Math.random()*.3);
+    const tx=w*(.25+Math.random()*.5);
+    const ty=h*(.12+Math.random()*.18);
+    rockets.push({
+      x:sx,y:h*.95,
+      startX:sx,startY:h*.95,
+      targetX:tx,targetY:ty,
+      progress:0,
+      duration:42 // ~0.7s flight to apex
+    });
+    if(!frameId)frameId=requestAnimationFrame(animateFx);
+  }
+
+  function explodeRocket(x,y){
+    const colors=['#ffd700','#ff5722','#ff4081','#00e676','#fff59d','#fff'];
+    const count=65;
+    for(let i=0;i<count;i++){
+      const angle=(i/count)*Math.PI*2+(Math.random()-.5)*.2;
+      const speed=1.8+Math.random()*3.8;
+      particles.push({
+        x:x,y:y,
+        vx:Math.cos(angle)*speed,
+        vy:Math.sin(angle)*speed,
+        life:1.0,
+        decay:.016+Math.random()*.008,
+        size:1.5+Math.random()*2.4,
+        color:colors[i%colors.length]
+      });
+    }
+  }
+
+  function launchFlowerPotAnimation(){
+    if(state.reducedMotion)return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    const baseX=w*0.5, baseY=h*0.92;
+    let burstCount=0;
+    const fountainInterval=setInterval(()=>{
+      if(state.reducedMotion || burstCount>18){
+        clearInterval(fountainInterval);
+        return;
+      }
+      burstCount++;
+      for(let i=0;i<12;i++){
+        const angle=-Math.PI/2+(Math.random()-0.5)*0.75;
+        const speed=4.5+Math.random()*4.5;
+        particles.push({
+          x:baseX+(Math.random()-0.5)*18,
+          y:baseY,
+          vx:Math.cos(angle)*speed,
+          vy:Math.sin(angle)*speed,
+          life:1.0,
+          decay:0.024+Math.random()*0.012,
+          size:1.8+Math.random()*2.2,
+          color:Math.random()>0.35?'#ffd700':'#ffffff'
+        });
+      }
+      if(!frameId)frameId=requestAnimationFrame(animateFx);
+    },120);
+  }
+
+  function launchLadiAnimation(){
+    if(state.reducedMotion)return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    let count=0;
+    const ladiInterval=setInterval(()=>{
+      if(state.reducedMotion || count>16){
+        clearInterval(ladiInterval);
+        return;
+      }
+      count++;
+      const lx=w*(0.35+Math.random()*0.3);
+      const ly=h*(0.88+Math.random()*0.06);
+      for(let i=0;i<9;i++){
+        const angle=Math.random()*Math.PI*2;
+        const speed=1.5+Math.random()*2.5;
+        particles.push({
+          x:lx,y:ly,
+          vx:Math.cos(angle)*speed,
+          vy:Math.sin(angle)*speed,
+          life:0.9,
+          decay:0.04+Math.random()*0.02,
+          size:1.4+Math.random()*1.8,
+          color:Math.random()>0.4?'#ff4400':'#fff59d'
+        });
+      }
+      if(!frameId)frameId=requestAnimationFrame(animateFx);
+    },140);
+  }
+
+  function fireworks(){
+    if(state.reducedMotion)return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    for(let j=0;j<2;j++){
+      const x=w*(.55+Math.random()*.32),y=h*(.14+Math.random()*.20);
+      explodeRocket(x,y);
+    }
+    if(!frameId)frameId=requestAnimationFrame(animateFx);
+  }
+
+  // Muhurat & Direct Actions
+  byId('offerArghya')?.addEventListener('click',arghya);
+  byId('offerArghyaDirect')?.addEventListener('click',arghya);
+  byId('diyaDirectBtn')?.addEventListener('click',diya);
+
+  // Festive Ghat Audio Effects Handlers (Strict Toggle On/Off, No Cacophony)
+  byId('rocketCrackerBtn')?.addEventListener('click',toggleRocketCracker);
+  byId('bombCrackerBtn')?.addEventListener('click',toggleBombCracker);
+  byId('shankhSoundBtn')?.addEventListener('click',toggleConchSound);
+  byId('loudspeakerAnnounceBtn')?.addEventListener('click',()=>broadcastAnnouncement());
+
+  // --- FLOATING FEATURE RAIL & AUTHENTIC MENUS (CHHATHGEET INSPIRED) ---
+  const fcBtn = byId('firecrackerRailBtn');
+  const fcMenu = byId('firecrackerOptions');
+  const annBtn = byId('announceRailBtn');
+  const annMenu = byId('announcementOptions');
+
+  function closeAllFeatureMenus(){
+    if(fcMenu) fcMenu.hidden = true;
+    if(annMenu) annMenu.hidden = true;
+    fcBtn?.classList.remove('is-open');
+    annBtn?.classList.remove('is-open');
+    fcBtn?.setAttribute('aria-expanded', 'false');
+    annBtn?.setAttribute('aria-expanded', 'false');
+  }
+
+  fcBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = !fcMenu.hidden;
+    closeAllFeatureMenus();
+    if(!isOpen){
+      fcMenu.hidden = false;
+      fcBtn.classList.add('is-open');
+      fcBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  annBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = !annMenu.hidden;
+    closeAllFeatureMenus();
+    if(!isOpen){
+      annMenu.hidden = false;
+      annBtn.classList.add('is-open');
+      annBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  fcMenu?.addEventListener('click', e => e.stopPropagation());
+  annMenu?.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', closeAllFeatureMenus);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeAllFeatureMenus();
+  });
+
+  // Feature Rail: Firecracker Sounds Suite
+  const FC_CONFIG = {
+    'flower-pot': {
+      file: 'assets/audio/firecrackers/flower-pot.mp3',
+      name: 'Flower pot',
+      desc: 'A bright fountain of sparks',
+      anim: launchFlowerPotAnimation,
+      toastMsg: '✨ अनार (Flower pot) • स्वर्णिम फुहारें!'
+    },
+    'ladi': {
+      file: 'assets/audio/firecrackers/ladi.mp3',
+      name: 'Ladi',
+      desc: 'A long chain of crackers',
+      anim: launchLadiAnimation,
+      toastMsg: '💥 लड़ी (Ladi) • चट-चट पटाखों की गूँज!'
+    },
+    'multi-sky-shot': {
+      file: 'assets/audio/firecrackers/multi-sky-shot.mp3',
+      name: 'Multi-sky shot',
+      desc: 'A spectacular sky barrage',
+      anim: () => { launchRocketAnimation(); setTimeout(launchRocketAnimation, 650); },
+      toastMsg: '🚀 मल्टी-स्काई शॉट • आसमान में भव्य आतिशबाज़ी!'
+    }
+  };
+
+  all('.sound-option-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const fcId = row.dataset.fcId;
+      const info = FC_CONFIG[fcId];
+      if(!info) return;
+
+      const small = row.querySelector('small');
+      const fcStatus = byId('firecrackerStatusText');
+
+      playFestiveAudio(
+        'fc-' + fcId,
+        info.file,
+        1.0,
+        () => {
+          all('.sound-option-row').forEach(r => {
+            r.classList.remove('is-playing');
+            const s = r.querySelector('small');
+            const rid = r.dataset.fcId;
+            if(s && FC_CONFIG[rid]) s.textContent = FC_CONFIG[rid].desc;
+          });
+          row.classList.add('is-playing');
+          if(small) small.textContent = 'Playing now...';
+          if(fcStatus) fcStatus.textContent = 'Playing now...';
+          info.anim();
+          toast(info.toastMsg);
+        },
+        () => {
+          row.classList.remove('is-playing');
+          if(small) small.textContent = info.desc;
+          if(fcStatus) fcStatus.textContent = 'Choose a sound';
+        }
+      );
+    });
+  });
+
+  // Feature Rail: Periodic Ghaat Announcements Controller
+  let announcementTimer = null;
+  let announcementIndex = 0;
+  let announcementsActive = false;
+  let announcementGapMin = 9;
+
+  function scheduleNextAnnouncement(){
+    clearTimeout(announcementTimer);
+    if(!announcementsActive) return;
+    announcementTimer = setTimeout(() => {
+      if(announcementsActive) playNextPeriodicAnnouncement();
+    }, announcementGapMin * 60 * 1000);
+  }
+
+  function playNextPeriodicAnnouncement(){
+    if(!announcementsActive) return;
+    const fileNum = (announcementIndex % 8) + 1;
+    announcementIndex++;
+    const audioFile = `assets/audio/ghaat/announcement-${fileNum}.mp3`;
+    const railBtn = byId('announceRailBtn');
+    const statusText = byId('announceStatusText');
+
+    playFestiveAudio(
+      'ghaat-periodic-announcement',
+      audioFile,
+      1.0,
+      () => {
+        railBtn?.classList.add('is-enabled');
+        if(statusText) statusText.textContent = 'Playing now...';
+        toast(`📣 घाट लाउडस्पीकर उद्घोष #${fileNum} प्रसारित हो रहा है...`);
+      },
+      () => {
+        if(announcementsActive){
+          if(statusText) statusText.textContent = `Every ${announcementGapMin} min`;
+          scheduleNextAnnouncement();
+        } else {
+          railBtn?.classList.remove('is-enabled');
+          if(statusText) statusText.textContent = 'Currently off';
+        }
+      }
+    );
+  }
+
+  function toggleAnnouncements(enable){
+    announcementsActive = (enable !== undefined) ? enable : !announcementsActive;
+    const toggleBtn = byId('announceToggleSwitch');
+    const railBtn = byId('announceRailBtn');
+    const statusText = byId('announceStatusText');
+
+    if(announcementsActive){
+      toggleBtn?.classList.add('is-active');
+      toggleBtn?.setAttribute('aria-checked', 'true');
+      railBtn?.classList.add('is-enabled');
+      if(statusText) statusText.textContent = `Every ${announcementGapMin} min`;
+      toast('📣 घाट उद्घोष चालू किया गया • पहला उद्घोष अभी बजेगा');
+      playNextPeriodicAnnouncement();
+    } else {
+      clearTimeout(announcementTimer);
+      toggleBtn?.classList.remove('is-active');
+      toggleBtn?.setAttribute('aria-checked', 'false');
+      railBtn?.classList.remove('is-enabled');
+      if(statusText) statusText.textContent = 'Currently off';
+      if(activeFestiveId === 'ghaat-periodic-announcement'){
+        stopActiveFestiveAudio(false);
+      }
+      toast('घाट उद्घोष बंद कर दिया गया।');
+    }
+  }
+
+  byId('announceToggleSwitch')?.addEventListener('click', () => toggleAnnouncements());
+
+  const gapSlider = byId('announceGapSlider');
+  const gapVal = byId('announceGapValue');
+  gapSlider?.addEventListener('input', e => {
+    announcementGapMin = Number(e.target.value) || 9;
+    if(gapVal) gapVal.textContent = `${announcementGapMin} min`;
+    if(announcementsActive){
+      const statusText = byId('announceStatusText');
+      if(statusText && activeFestiveId !== 'ghaat-periodic-announcement') statusText.textContent = `Every ${announcementGapMin} min`;
+      scheduleNextAnnouncement();
+    }
+  });
+
+  // Custom Live Announcement Handlers
+  byId('broadcastCustomBtn')?.addEventListener('click',()=>broadcastAnnouncement());
+  byId('customAnnounceInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')broadcastAnnouncement()});
+  all('.preset-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      all('.preset-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      const input=byId('customAnnounceInput');
+      if(input && chip.dataset.preset){
+        input.value=chip.dataset.preset;
+        input.focus();
+      }
+    });
+  });
+
+  // Sankalp Modal handlers
+  const sankalpModal=byId('sankalpModal');
+  const sankalpBackdrop=byId('sankalpBackdrop');
+  function openSankalp(){
+    if(!sankalpModal)return;
+    sankalpModal.hidden=false;
+    if(sankalpBackdrop)sankalpBackdrop.hidden=false;
+    byId('familyInput')?.focus();
+  }
+  function closeSankalp(){
+    if(!sankalpModal)return;
+    sankalpModal.hidden=true;
+    if(sankalpBackdrop)sankalpBackdrop.hidden=true;
+  }
+  byId('sankalpBtn')?.addEventListener('click',openSankalp);
+  byId('closeSankalpBtn')?.addEventListener('click',closeSankalp);
+  sankalpBackdrop?.addEventListener('click',closeSankalp);
+
+  byId('confirmSankalpBtn')?.addEventListener('click',()=>{
+    const val=(byId('familyInput')?.value||'').trim()||'आप और आपका परिवार';
+    const resultEl=byId('sankalpResult');
+    const textEl=byId('sankalpText');
+    if(textEl)textEl.textContent=`“${val} द्वारा सूर्य देव व षष्ठी देवी के चरणों में श्रद्धापूर्वक छठ महापर्व का पावन संकल्प समर्पित हुआ। छठी मैया आपके परिवार में सुख, उत्तम स्वास्थ्य, समृद्धि और प्रकाश प्रदान करें।”`;
+    if(resultEl)resultEl.hidden=false;
+    byId('sankalpForm').hidden=true;
+    toast('🌸 पावन संकल्प पत्र तैयार हुआ • जय छठी मैया');
+    fireworks();
+  });
+
+  byId('shareSankalpBtn')?.addEventListener('click',async()=>{
+    const val=(byId('familyInput')?.value||'').trim()||'हमारा परिवार';
+    const msg=`॥ जय छठी मैया ॥ 🌞\n${val} ने छठ महापर्व पर भगवान सूर्य व षष्ठी देवी का पावन संकल्प लिया है।\nछठी मैया सबके जीवन में सुख, स्वास्थ्य और तेज भरें।\nशुभ छठ महापर्व!`;
+    try{
+      if(navigator.share){await navigator.share({title:'छठ महापर्व संकल्प',text:msg});return}
+      if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(msg);toast('संकल्प संदेश कॉपी हो गया। WhatsApp पर भेजें।');return}
+    }catch{}
+    toast('संकल्प संदेश तैयार है।');
+  });
+
+  // Interactive Story Carousel
+  let currentStory=0;
+  const storySlides=all('.story-slide');
+  const storyDots=all('.story-dot');
+  function showStory(index){
+    if(!storySlides.length)return;
+    currentStory=(index+storySlides.length)%storySlides.length;
+    storySlides.forEach((slide,i)=>{
+      slide.classList.toggle('active',i===currentStory);
+    });
+    storyDots.forEach((dot,i)=>{
+      dot.classList.toggle('active',i===currentStory);
+    });
+    const counter=byId('storyCounter');
+    if(counter)counter.textContent=`0${currentStory+1} / 0${storySlides.length}`;
+  }
+  byId('prevStoryBtn')?.addEventListener('click',()=>showStory(currentStory-1));
+  byId('nextStoryBtn')?.addEventListener('click',()=>showStory(currentStory+1));
+  storyDots.forEach((dot,i)=>dot.addEventListener('click',()=>showStory(i)));
+  document.addEventListener('keydown',e=>{
+    if(document.activeElement?.tagName==='INPUT'||backdrop.hidden===false)return;
+    if(e.key==='ArrowLeft')showStory(currentStory-1);
+    if(e.key==='ArrowRight')showStory(currentStory+1);
+  });
+
+  function petals(){
+    const root=byId('flowerFall');
+    if(state.reducedMotion||document.hidden)return;
+    const p=document.createElement('span');
+    p.className='petal';
+    p.style.left=`${Math.random()*100}%`;
+    p.style.top='-20px';
+    p.style.setProperty('--dx',`${(Math.random()-.5)*250}px`);
+    p.style.animationDuration=`${15+Math.random()*11}s`;
+    root.append(p);
+    setTimeout(()=>p.remove(),29000);
+  }
+  let petalTimer=setInterval(petals,1800);
+  for(let i=0;i<14;i++)addDiya();
+  setInterval(()=>{if(document.hidden||state.reducedMotion)return;const count=byId('floatingDiyas').querySelectorAll('.floating-diya').length,target=13+Math.floor(Math.random()*12);for(let i=count;i<target;i++)addDiya();},6500);
+  function reduceMotion(value){state.reducedMotion=Boolean(value);document.body.classList.toggle('reduce-motion',state.reducedMotion);byId('reduceMotionToggle').checked=state.reducedMotion;store.set('chhath-reduce-motion',String(state.reducedMotion));if(state.reducedMotion){particles.length=0;ctx2.clearRect(0,0,canvas.clientWidth,canvas.clientHeight)}}
+  byId('reduceMotionToggle').onchange=e=>reduceMotion(e.target.checked);reduceMotion(store.get('chhath-reduce-motion')==='true'||state.reducedMotion);
+  const headerNav=byId('navBtn');headerNav.onclick=()=>{const nav=document.querySelector('.site-nav'),expanded=headerNav.getAttribute('aria-expanded')==='true';headerNav.setAttribute('aria-expanded',String(!expanded));nav.classList.toggle('nav-open',!expanded)};
+  all('.site-nav a').forEach(a=>a.onclick=()=>{document.querySelector('.site-nav').classList.remove('nav-open');headerNav.setAttribute('aria-expanded','false')});
+  const offeringFacts={
+    thekua:{
+      name:'ठेकुआ (महाप्रसाद)',
+      img:'assets/offering-thekua.jpg',
+      caption:'पारंपरिक ठेकुआ महाप्रसाद • सूर्य चक्र अलंकरण',
+      text:'छठ महापर्व का सबसे पावन और अनिवार्य महाप्रसाद। ठेकुआ केवल एक मिष्ठान नहीं, बल्कि ब्रह्मचर्य, अटूट संयम और सूर्योपासना का साक्षात् प्रतीक है। बिना ठेकुआ के छठ की पूजा व अर्घ्य पूर्ण नहीं माना जाता।',
+      insights:[
+        {
+          title:'✦ पवित्र निर्माण विधि (मिट्टी का चूल्हा व आम की लकड़ी)',
+          desc:'इसे केवल नए मिट्टी के चूल्हे पर, आम की सूखी लकड़ी की पवित्र अग्नि में, शुद्ध गाय के देसी घी में तला जाता है। बनाने वाली माताएँ स्नान कर, निर्जल रहकर, मौन अथवा पावन छठ गीतों के साथ इसे तैयार करती हैं।'
+        },
+        {
+          title:'✦ काष्ठ सांचा व सूर्य चक्र अलंकरण',
+          desc:'शीशम या सागवान की लकड़ी के पारंपरिक सांचे पर इसे सूर्य की किरणों, सूर्य चक्र और कमल के फूल की आकृतियों में ढाला जाता है, जो भास्कर देव को समर्पित होने का प्रमाण है।'
+        },
+        {
+          title:'✦ वैज्ञानिक व मौसमी दृष्टिकोण (Immunity & Health)',
+          desc:'कार्तिक मास में शरद ऋतु के आगमन पर गुड़, साबुत गेहूँ का दरदरा आटा, सौंफ, शुद्ध घी और सूखे मेवों का यह मिश्रण शरीर के वात-कफ को संतुलित करता है और सर्दियों में शरीर को अंदरूनी ऊर्जा व रोग प्रतिरोधक क्षमता प्रदान करता है।'
+        }
+      ],
+      tags:['शुद्ध गाय का देसी घी', 'मिट्टी का नया चूल्हा', 'काष्ठ सांचा (सूर्य चक्र)', 'रोग-प्रतिरोधक महाप्रसाद', 'छठी मैया का भोग']
+    },
+    soop:{
+      name:'सूप और दौरा (पावन अर्घ्य पात्र)',
+      img:'assets/pooja-thali-soop.jpg',
+      caption:'बाँस का सूप व दौरा • पावन अर्घ्य पात्र',
+      text:'बाँस के नए सूप और दौरा में सजाकर ही अस्ताचलगामी और उदीयमान भगवान सूर्य को अर्घ्य समर्पित किया जाता है। बाँस को सनातन संस्कृति में वंश वृद्धि, प्रकृति और जीवन की निरंतरता का सर्वोच्च प्रतीक माना गया है।',
+      insights:[
+        {
+          title:'✦ सामाजिक समरसता व समानता का अनुपम संदेश',
+          desc:'सनातन परंपरा की सबसे बड़ी दिव्यता यह है कि समाज के पारंपरिक कारीगरों (बसुफोर व डोम समुदाय) द्वारा अपने हाथों से बुने गए नए बाँस के सूप के बिना छठ पूजा संपन्न ही नहीं हो सकती। यह पर्व हर वर्ग को समान आदर व स्थान देता है।'
+        },
+        {
+          title:'✦ सूप सजाने का पावन क्रम व नियम',
+          desc:'सूप में सिंदूर के 5 या 7 टीके लगाए जाते हैं। इसमें पान-सुपारी, अक्षत, कच्ची हल्दी-अदरक का पौधा, ठेकुआ और ऋतु फल करीने से सजाए जाते हैं। अर्घ्य के समय दूध और गंगाजल की धार सूप से होकर सूर्य देव को अर्पित होती है।'
+        },
+        {
+          title:'✦ दौरा का सिर पर वहन — अहंकार का पूर्ण विसर्जन',
+          desc:'प्रसाद से भरे भारी बाँस के दौरा को परिवार का पुरुष या व्रती नंगे पाँव अपने सिर पर रखकर घाट तक ले जाता है। सिर पर उठाना अहंकार के त्याग और भगवान सूर्य के प्रति सर्वोच्च विनम्रता व शरणागति को दर्शाता है।'
+        }
+      ],
+      tags:['बाँस: वंश वृद्धि का प्रतीक', 'सामाजिक समानता का संदेश', 'सिर पर दौरा (अहंकार त्याग)', 'सिंदूर व अक्षत से अलंकरण', 'गंगाजल व दूध अर्पण']
+    },
+    fruits:{
+      name:'फल और मौसमी उपज (प्रकृति का उपहार)',
+      img:'assets/offering-fruits-sugarcane.jpg',
+      caption:'पत्तेदार गन्ना • डाभ नींबू • मौसमी अक्षत फल',
+      text:'छठ पूजा में किसी भी कृत्रिम या बाज़ारू वस्तु का स्थान नहीं होता। धरती माता से उपजी हर ताज़ा, अक्षुण्ण और मौसमी फसल को बिना किसी बदलाव के सीधे भगवान भास्कर को अर्पित किया जाता है।',
+      insights:[
+        {
+          title:'✦ डाभ नींबू (चकोतरा) — आरोग्य व दीर्घायु',
+          desc:'मोटे छिलके वाला डाभ नींबू छठ का प्रमुख फल है। आयुर्वेद में यह त्रिदोष नाशक और विटामिन-सी का अतुल्य स्रोत माना गया है, जो सर्दियों में मौसमी बीमारियों से रक्षा करता है।'
+        },
+        {
+          title:'✦ कच्ची हल्दी, अदरक व सुथनी — धरती का औषधीय वरदान',
+          desc:'पत्ते समेत कच्ची हल्दी की गाँठ, अदरक और सुथनी जैसी कंदमूल उपज सीधे मिट्टी से निकलती हैं। यह मनुष्य और प्रकृति के अविभाज्य रिश्ते तथा भूमि की उर्वरा शक्ति के प्रति कृतज्ञता दर्शाती हैं।'
+        },
+        {
+          title:'✦ अक्षत केला का घौंद व पत्तेदार गन्ना',
+          desc:'केले की पूरी कांदी (घौंद) जीवन में अखंडता व वंश वृद्धि का प्रतीक है। पत्तों समेत खड़े गन्ने सूर्य के तीक्ष्ण तेज में शीतलता, मिठास और मंडप जैसी छांव प्रदान करते हैं।'
+        }
+      ],
+      tags:['डाभ नींबू (त्रिदोष नाशक)', 'अक्षत केला (समृद्धि)', 'कच्ची हल्दी व अदरक (औषधि)', 'पत्तेदार गन्ना (छांव व मिठास)', 'शून्य मिलावट']
+    },
+    kosi:{
+      name:'कोसी भराई (अखंड रात्रि जागरण व मन्नत)',
+      img:'assets/ghat-koshi-night.jpg',
+      caption:'कोसी भराई • 24 दीपकों की अखंड ज्योति',
+      text:'संध्या अर्घ्य के बाद घर के आँगन या घाट पर पूरी रात कोसी भरी जाती है। यह परिवार की असाध्य कामनाओं की पूर्ति, संतान के दीर्घायु होने अथवा संकट से मुक्ति पर ली गई मनौती के प्रति आभार प्रकट करने का अलौकिक अनुष्ठान है।',
+      insights:[
+        {
+          title:'✦ गन्ने का भव्य मंडप — सूर्य के रथ की छांव',
+          desc:'4, 12 या 24 साबुत गन्नों को ऊपर से बाँधकर एक सुंदर प्राकृतिक मंडप (छत्र) बनाया जाता है, जो भगवान सूर्य के दिव्य रथ और ब्रह्मांडीय संरक्षण का प्रतीक है।'
+        },
+        {
+          title:'✦ मिट्टी का हाथी (ऐरावत) व 24 दीपकों का महाउजाला',
+          desc:'मंडप के नीचे मिट्टी के हाथी की पीठ और उसके चारों ओर 24 मिट्टी के दीपकों (कोसी कुल्हड़) में तेल भरकर पूरी रात अखंड ज्योति जलाई जाती है। हाथी शक्ति, ऐश्वर्य और देवराज इंद्र के वाहन ऐरावत का द्योतक है।'
+        },
+        {
+          title:'✦ रात भर पारंपरिक कोसी गीत व जागरण',
+          desc:'परिवार, सगे-संबंधी और पड़ोस की माताएँ रात भर बैठकर "कंचन थार कपूर के बाती" जैसे पारंपरिक कोसी गीत गाती हैं। सुबह इसी कोसी को घाट पर ले जाकर उषा अर्घ्य दिया जाता है।'
+        }
+      ],
+      tags:['24 दीपकों की अखंड ज्योति', 'गन्ने का दिव्य मंडप', 'मिट्टी का हाथी (ऐरावत)', 'पारंपरिक कोसी जागरण गीत', 'मनौती की पूर्णता']
+    }
+  };
+
+  function updateOfferingDetails(key, index){
+    const info=offeringFacts[key];
+    if(!info)return;
+    const numEl=byId('offeringNumber');
+    const nameEl=byId('offeringName');
+    const textEl=byId('offeringText');
+    const insightsEl=byId('offeringInsights');
+    const tagsEl=byId('offeringTags');
+    const imgEl=byId('offeringImg');
+    const captionEl=byId('stageCaption');
+
+    if(numEl) numEl.textContent=`0${index+1} / अर्पण`;
+    if(nameEl) nameEl.textContent=info.name;
+    if(textEl) textEl.textContent=info.text;
+
+    if(imgEl && info.img){
+      imgEl.classList.add('fade-out');
+      setTimeout(()=>{
+        imgEl.src=info.img;
+        imgEl.alt=info.name;
+        imgEl.classList.remove('fade-out');
+      },140);
+    }
+    if(captionEl && info.caption){
+      captionEl.textContent=info.caption;
+    }
+
+    if(insightsEl){
+      insightsEl.replaceChildren();
+      (info.insights||[]).forEach(item=>{
+        const box=document.createElement('div');
+        box.className='insight-box';
+        const strong=document.createElement('strong');
+        strong.textContent=item.title;
+        const p=document.createElement('p');
+        p.textContent=item.desc;
+        box.append(strong,p);
+        insightsEl.append(box);
+      });
+    }
+
+    if(tagsEl){
+      tagsEl.replaceChildren();
+      (info.tags||[]).forEach(tag=>{
+        const span=document.createElement('span');
+        span.className='offering-tag-item';
+        span.textContent=`✦ ${tag}`;
+        tagsEl.append(span);
+      });
+    }
+  }
+
+  all('[data-offering]').forEach((b,i)=>b.addEventListener('click',()=>{
+    all('[data-offering]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});
+    updateOfferingDetails(b.dataset.offering, i);
+  }));
+
+  updateOfferingDetails('thekua', 0);
+  all('[data-jhanki]').forEach(b=>b.addEventListener('click',()=>{
+    scene(b.dataset.jhanki);
+    if(b.classList.contains('photo-fireworks')){
+      playRocketCracker();
+    }else if(b.classList.contains('photo-maha-arghya')){
+      arghya();
+    }
+    document.getElementById('top').scrollIntoView({behavior:state.reducedMotion?'instant':'smooth',block:'start'});
+  }));
+
+  // Multi-Platform Social Share Handlers
+  const shareMessage='॥ जय छठी मैया ॥ 🌞\n“आदित्य देव को प्रणाम, छठी मैया का आशीर्वाद सबके जीवन में उजाला लाए।”\nसूर्य देव और छठी मैया आपके परिवार में सुख, उत्तम स्वास्थ्य, तेज और अखंड समृद्धि प्रदान करें।\nछठ महापर्व की हार्दिक शुभकामनाएँ!\n— Abhinav';
+
+  byId('shareWhatsAppBtn')?.addEventListener('click',()=>{
+    const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage+'\n'+location.href)}`;
+    window.open(url,'_blank','noopener,noreferrer');
+    toast('💬 WhatsApp पर शुभकामना संदेश खुल रहा है...');
+  });
+
+  byId('shareFacebookBtn')?.addEventListener('click',()=>{
+    const url=`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}&quote=${encodeURIComponent(shareMessage)}`;
+    window.open(url,'_blank','width=600,height=500,noopener,noreferrer');
+    toast('🌐 Facebook पर शुभकामना पोस्ट खुल रहा है...');
+  });
+
+  byId('shareInstagramBtn')?.addEventListener('click',async()=>{
+    try{
+      if(navigator.share){
+        await navigator.share({title:'छठ महापर्व की शुभकामनाएँ',text:shareMessage,url:location.href});
+        toast('📸 Instagram / सोशल मीडिया पर शेयर हुआ!');
+        return;
+      }
+    }catch(e){}
+    if(navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(shareMessage);
+      toast('📸 संदेश कॉपी हो गया! अब Instagram स्टोरी या पोस्ट में पेस्ट करें।');
+    }
+  });
+
+  byId('shareWish')?.addEventListener('click',async()=>{
+    try{
+      if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(shareMessage);
+        toast('📋 शुभकामना संदेश कॉपी हो गया! परिवार को भेजें।');
+        return;
+      }
+    }catch(e){}
+    toast('शुभकामना संदेश तैयार है।');
+  });
+  // Visitor numbers are not invented. An atmospheric label is the only indicator until real backend analytics exists.
+  scene('sandhya');renderPreview();renderSongs();updateMusic();
+})();
