@@ -329,7 +329,7 @@
   function updateAmbienceGain(){if(state.ambientNodes){const g=state.ambientNodes.gain.gain;g.setTargetAtTime(state.ambient?state.fxVol/100*.27:0,state.ambientContext.currentTime,.15)}}
   byId('ambientToggle').onchange=e=>{state.ambient=e.target.checked;if(state.ambient)createAmbience();updateAmbienceGain();toast(state.ambient?'नदी की हल्की आवाज़ चालू है।':'पृष्ठभूमि की आवाज़ बंद है।')};
 
-  const SCENE_KEYS = ['sandhya', 'usha', 'koshi', 'fireworks', 'arpan'];
+  const SCENE_KEYS = ['sandhya', 'usha', 'koshi', 'fireworks', 'arpan', 'bahangi'];
   function scene(name){
     if(!config.scenes[name])return;
     state.scene=name;
@@ -341,7 +341,7 @@
     });
     const idx = SCENE_KEYS.indexOf(name) + 1;
     const foot=document.querySelector('.scene-foot');
-    if(foot) foot.textContent=`SCENES · 0${idx || 1} / 05`;
+    if(foot) foot.textContent=`SCENES · 0${idx || 1} / 06`;
     updateFestivalStatus();
     toast(config.scenes[name].label+' • '+config.scenes[name].message);
     if(name==='koshi'){for(let i=0;i<5;i++)setTimeout(addDiya,i*220)}

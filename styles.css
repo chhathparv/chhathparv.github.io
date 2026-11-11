@@ -142,6 +142,12 @@ body[data-scene=arpan] .photo-scene {
   opacity: .86
 }
 
+body[data-scene=bahangi] .photo-scene {
+  background-image: url('assets/ghat-bahangi.jpg');
+  filter: saturate(1.16) brightness(.9);
+  opacity: .86
+}
+
 .scene-paint {
   position: absolute;
   inset: 0;
@@ -2432,11 +2438,11 @@ body[data-scene=koshi] .sun-orb {
   }
 
   .jhanki-grid {
-    grid-template-columns: 1fr 1fr
+    grid-template-columns: repeat(2, 1fr)
   }
 
   .jhanki-card:first-child {
-    grid-column: 1/-1
+    grid-column: auto
   }
 }
 
@@ -3111,6 +3117,12 @@ body[data-scene=arpan] .photo-scene {
   opacity: .86
 }
 
+body[data-scene=bahangi] .photo-scene {
+  background-image: url('assets/ghat-bahangi.jpg');
+  filter: saturate(1.16) brightness(.9);
+  opacity: .86
+}
+
 .story-photo {
   background-image: linear-gradient(8deg, rgba(4, 20, 25, .65), transparent 60%), url('assets/chhath-devotion.jpg');
   background-position: center 25%;
@@ -3182,7 +3194,7 @@ body[data-scene=koshi] .sun-orb {
   max-width: 1390px;
   margin: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px
 }
 
@@ -3245,6 +3257,17 @@ body[data-scene=koshi] .sun-orb {
 .jhanki-card.photo-maha-arghya {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .08) 75%), url('assets/ghat-maha-arghya.jpg');
   background-position: center, center 35%
+}
+
+.jhanki-card.photo-bahangi {
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .06) 75%), url('assets/ghat-bahangi.jpg');
+  background-position: center, center 42%
+}
+
+@media (max-width: 560px) {
+  .jhanki-grid {
+    grid-template-columns: 1fr
+  }
 }
 
 .jhanki-index {

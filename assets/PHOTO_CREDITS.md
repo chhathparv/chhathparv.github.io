@@ -14,6 +14,8 @@ All photography assets for this website are custom-created, high-definition (Ult
 9. `assets/story-nature-equality.jpg` — Sacred connection to mother nature: traditional clay chulha, whole sugarcane stalks, and handmade bamboo baskets representing zero vanity and complete social equality.
 10. `assets/ghat-fireworks.jpg` — Festive Twilight Ghat with Fireworks & Deepmala (Diyas lining the ghat stairs with vibrant firecrackers bursting across the night sky and golden water reflections).
 11. `assets/ghat-maha-arghya.jpg` — Sacred Maha Arghya in Golden Waters (Devotees holding decorated bamboo soop in the shimmering holy river at sunrise with fresh milk arghya and morning mist).
-12. `assets/offering-thekua.jpg` — Traditional homemade Thekua with authentic wooden sancha imprint, whole wheat, jaggery, fennel seeds, fried in pure desi ghee (Public Domain / CC0).
-13. `assets/images/firecrackers/` & `assets/audio/firecrackers/` — Festive multimedia assets (Flower pot, Ladi, Multi-sky shot) sourced for non-commercial cultural celebration.
-14. `assets/audio/ghaat/` — Authentic Hindi festive safety and devotion loudspeaker announcements (Public safety & cultural atmosphere).
+12. `assets/offering-thekua.jpg` — Custom AI-generated ultra-HD photorealistic Bihari Chhath Puja Thekua (Mahaprasad) featuring traditional wooden sancha sunburst, lotus, and leaf imprints arranged in a banana-leaf-lined bamboo soop and brass platter with glowing clay diya.
+13. `assets/ghat-bahangi.jpg` — Custom AI-generated ultra-HD 16:9 photorealistic Chhath Puja Bahangi & Daura Yatra at golden twilight river ghat with barefoot devotees carrying laden bamboo baskets and shoulder pole down marigold-lined ghat steps.
+14. `assets/share-preview.jpg` — Optimized 1200x630 Open Graph / WhatsApp / Facebook social link preview card derived from custom AI-generated Saur Urja Arghya artwork.
+15. `assets/images/firecrackers/` & `assets/audio/firecrackers/` — Festive multimedia assets (Flower pot, Ladi, Multi-sky shot) sourced for non-commercial cultural celebration.
+16. `assets/audio/ghaat/` — Authentic Hindi festive safety and devotion loudspeaker announcements (Public safety & cultural atmosphere).
