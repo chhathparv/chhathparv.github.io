@@ -41,7 +41,7 @@
     if(!visible){const p=document.createElement('p');p.className='empty-search';p.textContent='इस खोज के लिए कोई गीत नहीं मिला।';root.append(p)}
   }
   function renderPreview(){const target=byId('songPreview');if(!target)return;target.replaceChildren();songs.slice(0,6).forEach((s,i)=>{
-    const b=document.createElement('button');b.className='song-preview-item';b.type='button';b.onclick=()=>{openDrawer('music');chooseTrack(i,true)};
+    const b=document.createElement('button');b.className='song-preview-item';b.type='button';b.onclick=()=>{chooseTrack(i,true)};
     const n=document.createElement('span');n.className='preview-num';n.textContent=String(i+1).padStart(2,'0');const text=document.createElement('span');text.className='preview-title';const t=document.createElement('strong');t.textContent=s.title;const a=document.createElement('small');a.textContent=s.artist;text.append(t,a);
     const end=document.createElement('span');end.className='preview-end';end.textContent='सुनें ↗';b.append(n,text,end);target.append(b);
   })}
@@ -55,7 +55,7 @@
   all('[data-tab]').forEach(b=>b.onclick=()=>libraryTab(b.dataset.tab));
   byId('dockLibrary').onclick=()=>{openDrawer('music');libraryTab('curated')};byId('openPlaylist').onclick=()=>{openDrawer('music');libraryTab('curated')};
   if(byId('openSoundSettings')) byId('openSoundSettings').onclick=()=>openDrawer('sound');
-  byId('soundBtn').onclick=()=>openDrawer('music');
+  byId('soundBtn').onclick=()=>openDrawer('sound');
   byId('songSearch').addEventListener('input',renderSongs);
   let ytPromise=null;
   function whenYtReady(){
@@ -75,29 +75,38 @@
   function removeYT(){if(state.youTube){try{state.youTube.destroy()}catch{}state.youTube=null}}
   function loadCurated(index,autoplay=true){
     state.mode='curated';state.index=(index+songs.length)%songs.length;state.wantsPlay=autoplay;
-    updateMusic();openIfNeeded();
+    updateMusic();
+    const playingTrack=track();
+    if(state.youTube && typeof state.youTube.loadVideoById==='function'){
+      try{
+        state.youTube.setVolume(state.musicVol);
+        state.youTube.loadVideoById({videoId:playingTrack.videoId,startSeconds:playingTrack.start,...(playingTrack.end?{endSeconds:playingTrack.end}:{})});
+        if(!state.wantsPlay) state.youTube.pauseVideo();
+        else toast(`♫ ${playingTrack.title}`);
+        return;
+      }catch{}
+    }
     byId('youtubeMount').replaceChildren();removeYT();
     const holder=document.createElement('div');holder.id='youtubePlayer';byId('youtubeMount').append(holder);
     setNotice('आधिकारिक YouTube player लोड हो रहा है…');
+    if(autoplay) toast(`♫ ${playingTrack.title} — शुरू हो रहा है…`);
     whenYtReady().then(ok=>{
       if(state.mode!=='curated'||document.getElementById('youtubePlayer')!==holder)return;
       if(!ok){fallbackIframe(track());return}
-      const playingTrack=track();
-      state.youTube=new YT.Player('youtubePlayer',{height:'240',width:'425',videoId:playingTrack.videoId,
-        playerVars:{playsinline:1,rel:0,modestbranding:1,start:playingTrack.start,enablejsapi:1,origin:location.origin.startsWith('http')?location.origin:undefined},
-        events:{onReady:e=>{try{e.target.setVolume(state.musicVol);e.target.loadVideoById({videoId:playingTrack.videoId,startSeconds:playingTrack.start,...(playingTrack.end?{endSeconds:playingTrack.end}: {})});if(!state.wantsPlay)e.target.pauseVideo()}catch{}setNotice('YouTube player तैयार है। ▶ नहीं चलता हो तो वीडियो के अंदर Play दबाएँ या नीचे YouTube link खोलें।')},
+      const nextTrack=track();
+      state.youTube=new YT.Player('youtubePlayer',{height:'240',width:'425',videoId:nextTrack.videoId,
+        playerVars:{playsinline:1,rel:0,modestbranding:1,start:nextTrack.start,enablejsapi:1,autoplay:state.wantsPlay?1:0,origin:location.origin.startsWith('http')?location.origin:undefined},
+        events:{onReady:e=>{try{e.target.setVolume(state.musicVol);e.target.loadVideoById({videoId:nextTrack.videoId,startSeconds:nextTrack.start,...(nextTrack.end?{endSeconds:nextTrack.end}: {})});if(!state.wantsPlay)e.target.pauseVideo()}catch{}setNotice('YouTube player तैयार है। ▶ नहीं चलता हो तो वीडियो के अंदर Play दबाएँ या नीचे YouTube link खोलें।')},
                 onStateChange:e=>{if(state.mode!=='curated')return;const Y=window.YT.PlayerState;if(e.data===Y.PLAYING){state.playing=true;updateMusic()}else if(e.data===Y.PAUSED){state.playing=false;updateMusic()}else if(e.data===Y.ENDED){state.playing=false;changeSong(1,true)}},
-                onAutoplayBlocked:()=>{state.playing=false;updateMusic();setNotice('Browser ने autoplay रोक दिया है। कृपया player पर Play दबाएँ।')},
-                onError:e=>{state.playing=false;updateMusic();setNotice('इस गीत को यहाँ चलाने की अनुमति नहीं है। नीचे सीधे YouTube पर सुनें।')}}});
+                onAutoplayBlocked:()=>{state.playing=false;updateMusic();setNotice('Browser ने autoplay रोक दिया है। कृपया player पर Play दबाएँ।');toast('दोबारा ▶ Play दबाएँ या ♫ गीत सूची से चलाएँ।')},
+                onError:e=>{state.playing=false;updateMusic();setNotice('इस गीत को यहाँ चलाने की अनुमति नहीं है। नीचे सीधे YouTube पर सुनें।');toast('यह गीत embed में उपलब्ध नहीं है — ❯❯ से अगला गीत सुनें।')}}});
     });
   }
   function fallbackIframe(s){const mount=byId('youtubeMount');mount.replaceChildren();const frame=document.createElement('iframe');frame.title=`${s.title} official YouTube recording`;frame.allow='autoplay; encrypted-media; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.src=`https://www.youtube-nocookie.com/embed/${s.videoId}?start=${s.start}${s.end?`&end=${s.end}`:''}&autoplay=${state.wantsPlay?1:0}&playsinline=1`;mount.append(frame);state.playing=false;updateMusic();setNotice('YouTube controls के साथ गीत सुनें। यदि player न खुले तो YouTube लिंक इस्तेमाल करें।')}
-  function chooseTrack(index,autoplay=true){openDrawer('music');libraryTab('curated');loadCurated(index,autoplay)}
-  function openIfNeeded(){if(!drawer.classList.contains('open'))openDrawer('music')}
+  function chooseTrack(index,autoplay=true){libraryTab('curated');loadCurated(index,autoplay)}
   function changeSong(delta,autoplay=true){if(state.mode==='mine'){toast('आपकी playlist में अगले गीत के लिए YouTube player के controls इस्तेमाल करें।');return}chooseTrack(state.index+delta,autoplay)}
   function toggleMusic(){
-    openDrawer('music');
-    if(state.mode==='mine'){toast('अपनी playlist को YouTube player के Play button से चलाएँ।');return}
+    if(state.mode==='mine'){openDrawer('music');toast('अपनी playlist को YouTube player के Play button से चलाएँ।');return}
     if(!state.youTube){chooseTrack(state.index,true);return}
     try{const now=state.youTube.getPlayerState();if(now===YT.PlayerState.PLAYING)state.youTube.pauseVideo();else state.youTube.playVideo()}catch{chooseTrack(state.index,true)}
   }
@@ -575,13 +584,59 @@
     toast('🪔 गंगा में पावन दीपदान संपन्न • छठी मैया सबका कल्याण करें');
   }
 
+  let arghyaTimer=null;
   function arghya(){
     const el=byId('arghyaEffect');
     if(el){
+      const layer=byId('arghyaDynamicLayer');
+      clearTimeout(arghyaTimer);
       el.classList.remove('active');
+      if(layer)layer.replaceChildren();
       void el.offsetWidth;
       el.classList.add('active');
-      setTimeout(()=>el.classList.remove('active'),2900);
+
+      const stage=el.querySelector('.arghya-ritual-stage');
+      if(stage&&layer){
+        const rect=stage.getBoundingClientRect();
+        const mouthX=rect.left+rect.width*0.52;
+        const mouthY=rect.top+rect.height*0.30;
+        const dropCount=state.reducedMotion?6:22;
+        const petalCount=state.reducedMotion?3:9;
+
+        for(let i=0;i<dropCount;i++){
+          const drop=document.createElement('span');
+          drop.className='arghya-drop';
+          drop.style.setProperty('--ax',`${mouthX+(Math.random()*12-6)}px`);
+          drop.style.setProperty('--ay',`${mouthY+(Math.random()*10-4)}px`);
+          drop.style.setProperty('--aw',`${(4+Math.random()*3.2).toFixed(1)}px`);
+          drop.style.setProperty('--adx',`${(-rect.width*0.34+Math.random()*22-11).toFixed(1)}px`);
+          drop.style.setProperty('--ady',`${(rect.height*0.60+Math.random()*28-14).toFixed(1)}px`);
+          drop.style.setProperty('--ad',`${(0.95+Math.random()*0.45).toFixed(2)}s`);
+          drop.style.setProperty('--adelay',`${(0.18+i*0.095).toFixed(2)}s`);
+          layer.appendChild(drop);
+        }
+
+        for(let j=0;j<petalCount;j++){
+          const petal=document.createElement('span');
+          petal.className='arghya-petal';
+          petal.style.setProperty('--px',`${mouthX+(Math.random()*28-14)}px`);
+          petal.style.setProperty('--py',`${mouthY+(Math.random()*14-7)}px`);
+          petal.style.setProperty('--pdx',`${(-rect.width*0.42+Math.random()*45-22).toFixed(1)}px`);
+          petal.style.setProperty('--pdy',`${(rect.height*0.64+Math.random()*40-10).toFixed(1)}px`);
+          petal.style.setProperty('--pd',`${(1.65+Math.random()*0.65).toFixed(2)}s`);
+          petal.style.setProperty('--pdelay',`${(0.28+j*0.22).toFixed(2)}s`);
+          layer.appendChild(petal);
+        }
+      }
+
+      fxNoise(1.15,0.022);
+      setTimeout(()=>fxNoise(0.9,0.015),320);
+      [528,660,792].forEach((f,i)=>tone(f,1.45,'sine',0.05/(i+1),0.14+i*0.16));
+
+      arghyaTimer=setTimeout(()=>{
+        el.classList.remove('active');
+        if(layer)layer.replaceChildren();
+      },3700);
     }
     toast('☀ भगवान सूर्य को श्रद्धापूर्वक पावन अर्घ्य अर्पित');
   }

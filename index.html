@@ -25,8 +25,8 @@
 <link rel="icon" href="assets/sun-icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Hind:wght@300;400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=18">
-<script defer src="config.js?v=18"></script><script defer src="app.js?v=18"></script>
+<link rel="stylesheet" href="styles.css?v=19">
+<script defer src="config.js?v=19"></script><script defer src="app.js?v=19"></script>
 </head>
 <body data-scene="sandhya">
 <a class="skip" href="#meaning">मुख्य जानकारी पर जाएँ</a>
@@ -46,7 +46,7 @@
     <span class="logo-copy"><strong>छठ <span>महापर्व</span></strong><small>A DIGITAL GHAT CREATED BY ABHINAV</small></span>
   </a>
   <nav class="site-nav" aria-label="मुख्य नेविगेशन"><a href="#experience">अनुभव</a><a href="#jhanki">छठ की झाँकी</a><a href="#four-days">चार पावन दिन</a><a href="#songs">छठ गीत</a><a href="#meaning">क्यों मनाते हैं?</a></nav>
-  <div class="header-actions"><div class="status-chip" title="लाइव श्रद्धालु उपस्थित"><span class="pulse-dot"></span><span id="ambienceText">18 श्रद्धालु लाइव जुड़े हैं</span><small>LIVE</small></div><button class="round-icon" id="soundBtn" aria-label="Sound settings" title="ध्वनि नियंत्रित करें">🔊</button><button class="mobile-menu round-icon" id="navBtn" aria-label="Menu" aria-expanded="false">☰</button></div>
+  <div class="header-actions"><div class="status-chip" title="लाइव श्रद्धालु उपस्थित"><span class="pulse-dot"></span><span id="ambienceText">18 श्रद्धालु लाइव जुड़े हैं</span><small>LIVE</small></div><a class="header-yt-chip" href="https://www.youtube.com/playlist?list=PLEX7vfnQIhj8" target="_blank" rel="noopener noreferrer" title="YouTube Music पर छठ गीत प्लेलिस्ट खोलें"><span class="yt-dot" aria-hidden="true">▶</span> YT Music ↗</a><button class="round-icon" id="soundBtn" aria-label="Sound settings" title="ध्वनि नियंत्रित करें">🔊</button><button class="mobile-menu round-icon" id="navBtn" aria-label="Menu" aria-expanded="false">☰</button></div>
 </header>
 <main>
 <section class="hero" aria-labelledby="heroTitle">
@@ -431,7 +431,7 @@
   </div>
 </section>
 
-<section class="music-section" id="songs"><div class="music-heading"><div><p class="eyebrow">MELODIES OF DEVOTION</p><h2>भक्ति के <em>पावन सुर</em></h2><p>22 पारंपरिक छठ गीत · आधिकारिक YouTube recordings के ज़रिए</p></div><button class="btn-primary btn-small" id="openPlaylist">♫ पूरा गीत संग्रह <span>↗</span></button></div><div class="song-preview" id="songPreview"></div><p class="song-copyright">गीतों के अधिकार संबंधित कलाकारों और music labels के पास हैं। Playback आधिकारिक YouTube player से होता है; embedded availability बदल सकती है।</p></section>
+<section class="music-section" id="songs"><div class="music-heading"><div><p class="eyebrow">MELODIES OF DEVOTION</p><h2>भक्ति के <em>पावन सुर</em></h2><p>22 पारंपरिक छठ गीत · आधिकारिक YouTube recordings के ज़रिए</p></div><div class="music-heading-actions"><a class="yt-music-chip" href="https://www.youtube.com/playlist?list=PLEX7vfnQIhj8" target="_blank" rel="noopener noreferrer" title="YouTube Music पर प्लेलिस्ट सुनें"><span>▶</span> YT Music ↗</a><button class="btn-primary btn-small" id="openPlaylist">♫ पूरा गीत संग्रह <span>↗</span></button></div></div><div class="song-preview" id="songPreview"></div><p class="song-copyright">गीतों के अधिकार संबंधित कलाकारों और music labels के पास हैं। Playback आधिकारिक YouTube player से होता है; embedded availability बदल सकती है।</p></section>
 <section class="blessing"><span>✺</span><p>“आदित्य देव को प्रणाम, छठी मैया का आशीर्वाद सबके जीवन में उजाला लाए।”</p><strong>॥ जय छठी मैया ॥</strong>
   <div class="share-actions-group">
     <button type="button" class="social-share-btn btn-whatsapp" id="shareWhatsAppBtn" aria-label="WhatsApp पर शुभकामनाएँ भेजें"><span class="social-icon">💬</span> WhatsApp पर भेजें</button>
@@ -470,7 +470,52 @@
     </div>
   </div>
 </div>
-<div id="arghyaEffect" class="arghya-effect" aria-hidden="true"><div class="water-stream"></div><span>☀</span></div>
+<div id="arghyaEffect" class="arghya-effect" aria-hidden="true">
+  <div class="arghya-sky-wash"></div>
+  <div class="arghya-sun-aura"></div>
+  <div class="arghya-sun-rays"></div>
+  <div class="arghya-ritual-stage">
+    <svg class="arghya-kalash-svg" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="kalashBrass" cx="38%" cy="32%" r="68%">
+          <stop offset="0%" stop-color="#ffe7a3"/>
+          <stop offset="45%" stop-color="#e59a3c"/>
+          <stop offset="85%" stop-color="#8b4212"/>
+          <stop offset="100%" stop-color="#4e2006"/>
+        </radialGradient>
+        <linearGradient id="kalashRim" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ffefc1"/>
+          <stop offset="50%" stop-color="#d4832a"/>
+          <stop offset="100%" stop-color="#ffd584"/>
+        </linearGradient>
+        <linearGradient id="arghyaJalGrad" x1="15%" y1="10%" x2="90%" y2="95%">
+          <stop offset="0%" stop-color="#fff8e8" stop-opacity="0.96"/>
+          <stop offset="35%" stop-color="#ffe7b8" stop-opacity="0.9"/>
+          <stop offset="70%" stop-color="#f5c97b" stop-opacity="0.65"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.18"/>
+        </linearGradient>
+      </defs>
+      <g class="arghya-kalash-vessel" transform="translate(96,26) rotate(-32 55 55)">
+        <ellipse cx="56" cy="18" rx="22" ry="7" fill="url(#kalashRim)" stroke="#ffefbe" stroke-width="1.5"/>
+        <path d="M36 20 C42 30 39 39 31 46 C18 59 18 89 35 102 C46 110 66 110 77 102 C94 89 94 59 81 46 C73 39 70 30 76 20 Z" fill="url(#kalashBrass)" stroke="#f6c773" stroke-width="1.4"/>
+        <ellipse cx="56" cy="54" rx="28" ry="4.5" fill="none" stroke="rgba(255,235,179,0.55)" stroke-width="1.2"/>
+        <ellipse cx="56" cy="74" rx="34" ry="5" fill="none" stroke="rgba(255,235,179,0.42)" stroke-width="1.1"/>
+        <path d="M40 62 Q48 56 56 62 Q64 68 72 62" stroke="#ffd88e" stroke-width="1.5" stroke-linecap="round" opacity="0.72"/>
+        <circle cx="46" cy="48" r="10" fill="rgba(255,250,224,0.22)"/>
+      </g>
+      <path class="arghya-stream-outer" d="M114 61 C92 68 64 108 40 186" stroke="url(#arghyaJalGrad)" stroke-width="13" stroke-linecap="round" fill="none"/>
+      <path class="arghya-stream-core" d="M114 61 C90 70 62 110 40 186" stroke="#fffdf7" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="18 12" fill="none"/>
+    </svg>
+    <div class="arghya-ripples">
+      <span class="arghya-splash"></span>
+      <span class="arghya-ripple r1"></span>
+      <span class="arghya-ripple r2"></span>
+      <span class="arghya-ripple r3"></span>
+    </div>
+  </div>
+  <div id="arghyaDynamicLayer" class="arghya-dynamic-layer"></div>
+  <div class="arghya-mantra-pill"><span>☀</span> ॐ घृणि सूर्याय नमः • पावन अर्घ्य समर्पित</div>
+</div>
 <div id="deepDaanStage" class="deep-daan-stage" aria-hidden="true">
   <div class="deep-river-glow" id="deepRiverGlow"></div>
   <div id="deepDaanDiyas" class="deep-daan-diyas"></div>
