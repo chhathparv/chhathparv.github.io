@@ -362,6 +362,31 @@
   }
   setInterval(updateDevoteeCount, 60000); // Updated once every 1 minute
 
+  function updateLiveGhatClock(){
+    const clockEl = byId('liveGhatClock');
+    const dateEl = byId('liveGhatDate');
+    if(!clockEl && !dateEl) return;
+    const now = new Date();
+    if(clockEl){
+      clockEl.textContent = now.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).toUpperCase();
+      clockEl.setAttribute('datetime', now.toISOString());
+    }
+    if(dateEl){
+      dateEl.textContent = now.toLocaleDateString('hi-IN', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+    }
+  }
+  updateLiveGhatClock();
+  setInterval(updateLiveGhatClock, 1000);
+
   function createDiyaBowlSvg(uid){
     const ns='http://www.w3.org/2000/svg';
     const svg=document.createElementNS(ns,'svg');
@@ -734,6 +759,7 @@
   byId('offerArghya')?.addEventListener('click',arghya);
   byId('offerArghyaDirect')?.addEventListener('click',arghya);
   byId('diyaDirectBtn')?.addEventListener('click',diya);
+  byId('heroDeepDaanBtn')?.addEventListener('click',diya);
 
   // Festive Ghat Audio Effects Handlers (Strict Toggle On/Off, No Cacophony)
   byId('rocketCrackerBtn')?.addEventListener('click',toggleRocketCracker);
