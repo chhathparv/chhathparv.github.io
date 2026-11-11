@@ -362,6 +362,137 @@
   }
   setInterval(updateDevoteeCount, 60000); // Updated once every 1 minute
 
+  function createDiyaBowlSvg(uid){
+    const ns='http://www.w3.org/2000/svg';
+    const svg=document.createElementNS(ns,'svg');
+    svg.setAttribute('viewBox','0 0 64 38');
+    svg.setAttribute('class','diya-svg');
+    svg.setAttribute('aria-hidden','true');
+
+    const defs=document.createElementNS(ns,'defs');
+    const clayGrad=document.createElementNS(ns,'linearGradient');
+    clayGrad.setAttribute('id',`clay-${uid}`);
+    clayGrad.setAttribute('x1','0%');clayGrad.setAttribute('y1','0%');
+    clayGrad.setAttribute('x2','0%');clayGrad.setAttribute('y2','100%');
+    const s1=document.createElementNS(ns,'stop');s1.setAttribute('offset','0%');s1.setAttribute('stop-color','#d97a46');
+    const s2=document.createElementNS(ns,'stop');s2.setAttribute('offset','55%');s2.setAttribute('stop-color','#a84d24');
+    const s3=document.createElementNS(ns,'stop');s3.setAttribute('offset','100%');s3.setAttribute('stop-color','#642812');
+    clayGrad.append(s1,s2,s3);
+
+    const gheeGrad=document.createElementNS(ns,'radialGradient');
+    gheeGrad.setAttribute('id',`ghee-${uid}`);
+    const g1=document.createElementNS(ns,'stop');g1.setAttribute('offset','0%');g1.setAttribute('stop-color','#ffe89e');
+    const g2=document.createElementNS(ns,'stop');g2.setAttribute('offset','70%');g2.setAttribute('stop-color','#e29934');
+    const g3=document.createElementNS(ns,'stop');g3.setAttribute('offset','100%');g3.setAttribute('stop-color','#8a4618');
+    gheeGrad.append(g1,g2,g3);
+
+    defs.append(clayGrad,gheeGrad);
+    svg.append(defs);
+
+    // Traditional leaf base (पत्ता / दोना) floating on Ganga
+    const leaf=document.createElementNS(ns,'ellipse');
+    leaf.setAttribute('cx','32');leaf.setAttribute('cy','28');
+    leaf.setAttribute('rx','29');leaf.setAttribute('ry','7');
+    leaf.setAttribute('fill','#2d5a34');leaf.setAttribute('opacity','0.9');
+    svg.append(leaf);
+
+    // Earthen clay diya bowl
+    const bowl=document.createElementNS(ns,'path');
+    bowl.setAttribute('d','M10 15 Q32 34 54 15 L49 11 Q32 21 15 11 Z');
+    bowl.setAttribute('fill',`url(#clay-${uid})`);
+    svg.append(bowl);
+
+    // Upper rim & ghee pool
+    const rim=document.createElementNS(ns,'ellipse');
+    rim.setAttribute('cx','32');rim.setAttribute('cy','12.5');
+    rim.setAttribute('rx','21');rim.setAttribute('ry','5.5');
+    rim.setAttribute('fill','#c96736');
+    svg.append(rim);
+
+    const ghee=document.createElementNS(ns,'ellipse');
+    ghee.setAttribute('cx','32');ghee.setAttribute('cy','12.5');
+    ghee.setAttribute('rx','16.5');ghee.setAttribute('ry','3.6');
+    ghee.setAttribute('fill',`url(#ghee-${uid})`);
+    svg.append(ghee);
+
+    // Subtle marigold petal accents on leaf
+    for(const [cx,cy,col] of [[12,25,'#ff9800'],[52,25,'#ffb300'],[20,29,'#ffd54f']]){
+      const petal=document.createElementNS(ns,'circle');
+      petal.setAttribute('cx',String(cx));petal.setAttribute('cy',String(cy));
+      petal.setAttribute('r','2.2');petal.setAttribute('fill',col);
+      svg.append(petal);
+    }
+    return svg;
+  }
+
+  let deepDaanGlowTimer=0;
+  let diyaUid=0;
+  function spawnViewportDiya(originX,originY,index,total){
+    const container=byId('deepDaanDiyas');
+    if(!container)return;
+    const vw=window.innerWidth||1280;
+    const vh=window.innerHeight||800;
+
+    const item=document.createElement('div');
+    item.className='deep-daan-item';
+
+    // Target spread across screen width while rising smoothly toward upper horizon
+    const slotRatio=(index+0.35+Math.random()*0.3)/total;
+    const targetX=vw*(0.08+0.84*slotRatio);
+    const dx=targetX-originX;
+    const sway=(Math.random()-0.5)*90;
+    const riseTotal=Math.max(vh*0.62,originY+40);
+    const scale=0.68+Math.random()*0.48;
+    const dur=state.reducedMotion?1.8:(4.5+Math.random()*1.8);
+
+    item.style.setProperty('--sx',`${originX+(Math.random()-0.5)*18}px`);
+    item.style.setProperty('--sy',`${originY+(Math.random()-0.5)*10}px`);
+    item.style.setProperty('--bx',`${dx*0.38}px`);
+    item.style.setProperty('--by',`${-28-Math.random()*42}px`);
+    item.style.setProperty('--mx',`${dx*0.78+sway}px`);
+    item.style.setProperty('--my',`${-riseTotal*0.48}px`);
+    item.style.setProperty('--ex',`${dx+sway*0.6}px`);
+    item.style.setProperty('--ey',`${-riseTotal}px`);
+    item.style.setProperty('--sc',scale.toFixed(2));
+    item.style.setProperty('--dur',`${dur.toFixed(2)}s`);
+    item.style.setProperty('--f-dur',`${(0.75+Math.random()*0.45).toFixed(2)}s`);
+    item.style.setProperty('--f-delay',`${(-Math.random()*0.8).toFixed(2)}s`);
+
+    const aura=document.createElement('div');aura.className='diya-aura';
+    const flameWrap=document.createElement('div');flameWrap.className='diya-flame-wrap';
+    const flameOuter=document.createElement('div');flameOuter.className='diya-flame-outer';
+    const flameCore=document.createElement('div');flameCore.className='diya-flame-core';
+    flameWrap.append(flameOuter,flameCore);
+
+    const reflect=document.createElement('div');reflect.className='diya-reflection';
+    const svg=createDiyaBowlSvg(++diyaUid);
+
+    item.append(aura,reflect,svg,flameWrap);
+    container.append(item);
+
+    const cleanupMs=Math.ceil(dur*1000)+150;
+    item.addEventListener('animationend',()=>item.remove(),{once:true});
+    setTimeout(()=>item.remove(),cleanupMs);
+  }
+
+  function spawnDeepSpark(originX,originY){
+    if(state.reducedMotion)return;
+    const container=byId('deepDaanDiyas');
+    if(!container)return;
+    const spark=document.createElement('span');
+    spark.className='deep-spark';
+    spark.style.setProperty('--sx',`${originX+(Math.random()-0.5)*60}px`);
+    spark.style.setProperty('--sy',`${originY+(Math.random()-0.5)*20}px`);
+    spark.style.setProperty('--sz',`${3+Math.random()*4.5}px`);
+    spark.style.setProperty('--sx-drift',`${(Math.random()-0.5)*240}px`);
+    spark.style.setProperty('--sy-rise',`${-160-Math.random()*280}px`);
+    const dur=1.9+Math.random()*1.4;
+    spark.style.setProperty('--dur',`${dur.toFixed(2)}s`);
+    container.append(spark);
+    spark.addEventListener('animationend',()=>spark.remove(),{once:true});
+    setTimeout(()=>spark.remove(),Math.ceil(dur*1000)+100);
+  }
+
   function addDiya(){
     const parent=byId('floatingDiyas');
     if(!parent)return;
@@ -373,10 +504,52 @@
     d.addEventListener('animationend',()=>d.remove(),{once:true});
     setTimeout(()=>d.remove(),21000);
   }
-  function diya(){
-    for(let i=0;i<4;i++)setTimeout(addDiya,i*220);
-    toast('🪔 गंगा में दीपदान संपन्न • छठी मैया सबका कल्याण करें');
+
+  function diya(event){
+    // 1. Populate top hero river backdrop
+    for(let i=0;i<6;i++)setTimeout(addDiya,i*180);
+
+    // 2. Determine origin coordinates from clicked button (so diyas visibly emerge right from it!)
+    const btn=(event&&event.currentTarget instanceof Element)?event.currentTarget:byId('diyaDirectBtn');
+    const vw=window.innerWidth||1280;
+    const vh=window.innerHeight||800;
+    let originX=vw*0.5;
+    let originY=vh*0.76;
+
+    if(btn){
+      const rect=btn.getBoundingClientRect();
+      if(rect.width>0&&rect.bottom>0&&rect.top<vh){
+        originX=rect.left+rect.width/2;
+        originY=rect.top+rect.height/2;
+      }
+      btn.classList.add('is-offering');
+      setTimeout(()=>btn.classList.remove('is-offering'),900);
+    }
+
+    // 3. Activate golden river twilight glow on current viewport
+    const glow=byId('deepRiverGlow');
+    if(glow){
+      glow.classList.add('active');
+      clearTimeout(deepDaanGlowTimer);
+      deepDaanGlowTimer=setTimeout(()=>glow.classList.remove('active'),4800);
+    }
+
+    // 4. Launch 16 realistic earthen diyas emerging from the button & floating upward
+    const totalDiyas=state.reducedMotion?5:16;
+    for(let i=0;i<totalDiyas;i++){
+      setTimeout(()=>spawnViewportDiya(originX,originY,i,totalDiyas),i*85);
+    }
+    const totalSparks=state.reducedMotion?0:24;
+    for(let j=0;j<totalSparks;j++){
+      setTimeout(()=>spawnDeepSpark(originX,originY),j*65);
+    }
+
+    // 5. Gentle devotional temple bell harmonic chime (respects fxVol)
+    [528,792,1056].forEach((f,i)=>tone(f,1.4,'sine',0.065/(i+1),i*0.09));
+
+    toast('🪔 गंगा में पावन दीपदान संपन्न • छठी मैया सबका कल्याण करें');
   }
+
   function arghya(){
     const el=byId('arghyaEffect');
     if(el){

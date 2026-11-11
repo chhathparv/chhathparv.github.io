@@ -3925,3 +3925,205 @@ body[data-scene="koshi"] .photo-scene {
     max-width: 320px;
   }
 }
+
+/* ============================================================
+   GANGA DEEP DAAN VIEWPORT SIMULATION
+   ============================================================ */
+.deep-daan-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 140;
+  overflow: hidden;
+}
+
+.deep-river-glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 45vh;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 186, 82, 0.28) 0%, rgba(235, 118, 36, 0.13) 45%, transparent 78%);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.deep-river-glow.active {
+  opacity: 1;
+}
+
+.deep-daan-diyas {
+  position: absolute;
+  inset: 0;
+}
+
+.deep-daan-item {
+  position: fixed;
+  left: var(--sx, 50vw);
+  top: var(--sy, 75vh);
+  width: 68px;
+  height: 76px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: deepDaanFloat var(--dur, 5.2s) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.deep-daan-item .diya-aura {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  width: 78px;
+  height: 78px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 224, 130, 0.65) 0%, rgba(255, 152, 40, 0.28) 42%, transparent 72%);
+  filter: blur(4px);
+  animation: diyaAuraPulse 1.6s ease-in-out infinite alternate;
+}
+
+.deep-daan-item .diya-flame-wrap {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 18px;
+  height: 30px;
+  transform: translateX(-50%);
+  transform-origin: 50% 90%;
+  animation: diyaFlameFlicker var(--f-dur, 0.9s) ease-in-out infinite alternate;
+  animation-delay: var(--f-delay, 0s);
+}
+
+.deep-daan-item .diya-flame-outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  background: radial-gradient(circle at 50% 70%, #fffbe0 0%, #ffd54f 38%, #ff7a18 82%, rgba(255, 87, 34, 0) 100%);
+  box-shadow: 0 0 18px 4px rgba(255, 190, 68, 0.72);
+}
+
+.deep-daan-item .diya-flame-core {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 8px;
+  height: 15px;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  background: #ffffff;
+  box-shadow: 0 0 8px #fff8c8;
+}
+
+.deep-daan-item .diya-svg {
+  position: absolute;
+  left: 50%;
+  top: 28px;
+  width: 58px;
+  height: 34px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+.deep-daan-item .diya-reflection {
+  position: absolute;
+  left: 50%;
+  top: 58px;
+  width: 56px;
+  height: 10px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 206, 102, 0.55) 0%, rgba(255, 165, 58, 0.18) 55%, transparent 80%);
+  filter: blur(2.5px);
+  animation: diyaReflectWave 1.8s ease-in-out infinite alternate;
+}
+
+.deep-spark {
+  position: fixed;
+  left: var(--sx, 50vw);
+  top: var(--sy, 75vh);
+  width: var(--sz, 5px);
+  height: var(--sz, 5px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe6 0%, #ffca52 55%, rgba(255, 145, 36, 0) 100%);
+  box-shadow: 0 0 10px rgba(255, 210, 96, 0.85);
+  pointer-events: none;
+  animation: deepSparkRise var(--dur, 2.8s) ease-out forwards;
+}
+
+.muhurat-action-btn.is-offering {
+  box-shadow: 0 0 26px rgba(255, 198, 92, 0.65), 0 0 0 2px rgba(255, 224, 150, 0.55);
+  transform: scale(0.98);
+}
+
+@keyframes deepDaanFloat {
+  0% {
+    transform: translate(-50%, -50%) scale(0.22);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(calc(-50% + var(--bx, 0px)), calc(-50% + var(--by, -32px))) scale(var(--sc, 1));
+    opacity: 1;
+  }
+  52% {
+    transform: translate(calc(-50% + var(--mx, 20px)), calc(-50% + var(--my, -240px))) scale(calc(var(--sc, 1) * 0.94));
+    opacity: 0.98;
+  }
+  84% {
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--ex, 0px)), calc(-50% + var(--ey, -560px))) scale(calc(var(--sc, 1) * 0.58));
+    opacity: 0;
+  }
+}
+
+@keyframes diyaFlameFlicker {
+  0% {
+    transform: translateX(-50%) rotate(-3deg) scale(0.96, 0.98);
+  }
+  50% {
+    transform: translateX(-50%) rotate(2.5deg) scale(1.04, 1.07);
+  }
+  100% {
+    transform: translateX(-50%) rotate(-1.5deg) scale(0.98, 1.03);
+  }
+}
+
+@keyframes diyaAuraPulse {
+  from {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+@keyframes diyaReflectWave {
+  from {
+    transform: translateX(-50%) scaleX(0.9);
+    opacity: 0.48;
+  }
+  to {
+    transform: translateX(-50%) scaleX(1.18);
+    opacity: 0.78;
+  }
+}
+
+@keyframes deepSparkRise {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--sx-drift, 20px)), calc(-50% + var(--sy-rise, -260px))) scale(0.1);
+    opacity: 0;
+  }
+}
+
+body.reduce-motion .deep-daan-item {
+  animation-duration: 1.8s;
+}
