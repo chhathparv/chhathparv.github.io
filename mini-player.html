@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>छठ गीत मिनी प्लेयर — डिजिटल घाट</title>
+<meta name="theme-color" content="#141819">
+<link rel="icon" href="assets/sun-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Hind:wght@400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#121718;
+  --card:#1a2224;
+  --ink:#f9efe0;
+  --soft:#ecd4b4;
+  --muted:#a6a49a;
+  --gold:#f0be74;
+  --line:rgba(255,224,174,.2);
+  --hindi:'Hind',sans-serif;
+  --sans:'DM Sans',sans-serif;
+  --serif:'Yatra One',Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  min-height:100%;
+  background:radial-gradient(circle at 80% 0%,rgba(240,180,96,.14),transparent 46%),var(--bg);
+  color:var(--ink);
+  font-family:var(--hindi);
+  overflow-x:clip;
+}
+.mini-wrap{
+  max-width:480px;
+  margin:0 auto;
+  padding:14px 14px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.mini-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+}
+.mini-brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+.mini-sun{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 35% 30%,#ffe4a8,#d38435);
+  color:#23180c;
+  font-size:17px;
+  flex-shrink:0;
+}
+.mini-brand-copy{min-width:0}
+.mini-brand-copy small{
+  display:block;
+  font:700 9px var(--sans);
+  letter-spacing:1.4px;
+  color:#e7ba78;
+}
+.mini-brand-copy strong{
+  display:block;
+  font-family:var(--serif);
+  font-size:18px;
+  font-weight:400;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.back-ghat{
+  flex-shrink:0;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:600;
+  color:#ffe3b5;
+  padding:6px 11px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  white-space:nowrap;
+}
+.back-ghat:hover{background:rgba(240,190,116,.16)}
+.player-frame-wrap{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:#0a0f10;
+}
+.player-frame-wrap iframe,
+.player-frame-wrap #miniYtHost{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
+.now-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px 13px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.now-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:11.5px;
+  color:var(--soft);
+}
+.live-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.live-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#8a8f8c;
+}
+.live-dot.playing{
+  background:#4ade80;
+  box-shadow:0 0 8px rgba(74,222,128,.65);
+}
+.now-title{
+  font-size:18px;
+  font-weight:700;
+  line-height:1.25;
+  color:#fff3dc;
+}
+.now-artist{
+  font-size:13px;
+  color:var(--muted);
+}
+.controls-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-top:4px;
+}
+.btn-group{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.ctrl-btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  cursor:pointer;
+  font-size:14px;
+  display:grid;
+  place-items:center;
+}
+.ctrl-btn.primary{
+  width:46px;
+  height:46px;
+  border:0;
+  background:var(--gold);
+  color:#231b11;
+  font-weight:700;
+  font-size:17px;
+}
+.vol-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  color:var(--soft);
+}
+.vol-wrap input{
+  width:78px;
+  accent-color:var(--gold);
+}
+.mini-notice{
+  font-size:12px;
+  line-height:1.45;
+  color:#d9c29f;
+  background:rgba(240,190,116,.08);
+  border:1px solid rgba(240,190,116,.2);
+  border-radius:9px;
+  padding:8px 10px;
+}
+.mini-actions-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+}
+.mini-actions-foot a{
+  color:#f5c97e;
+  text-decoration:none;
+  font-weight:600;
+}
+.queue-box{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.queue-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--soft);
+  padding:0 2px;
+}
+.queue-list{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  max-height:210px;
+  overflow-y:auto;
+}
+.q-item{
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--ink);
+  text-align:left;
+  padding:8px 9px;
+  border-radius:8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.q-item:hover{background:rgba(240,190,116,.09)}
+.q-item.active{
+  background:rgba(240,190,116,.16);
+  border-color:rgba(240,190,116,.34);
+}
+.q-num{
+  font:700 11px var(--sans);
+  color:#d8ad6d;
+  min-width:20px;
+}
+.q-copy{
+  flex:1;
+  min-width:0;
+}
+.q-copy strong{
+  display:block;
+  font-size:13.5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.q-copy small{
+  display:block;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.q-mark{
+  color:var(--gold);
+  font-size:12px;
+}
+body.is-pip .back-ghat{display:none}
+@media(max-width:340px){
+  .mini-wrap{padding:10px}
+  .vol-wrap input{width:58px}
+}
+</style>
+<script defer src="config.js?v=20"></script>
+</head>
+<body>
+<main class="mini-wrap">
+  <header class="mini-head">
+    <div class="mini-brand">
+      <span class="mini-sun" aria-hidden="true">☀</span>
+      <div class="mini-brand-copy">
+        <small>CHHATH GEET MINI PLAYER</small>
+        <strong>पावन छठ रेडियो</strong>
+      </div>
+    </div>
+    <a class="back-ghat" id="returnGhatLink" href="./">मुख्य घाट ↗</a>
+  </header>
+
+  <div class="player-frame-wrap">
+    <div id="miniYtHost" style="display:grid;place-items:center;color:#d6be9b;font-size:13px;padding:12px;text-align:center;">♫ YouTube प्लेयर तैयार हो रहा है…</div>
+  </div>
+
+  <section class="now-card" aria-live="polite">
+    <div class="now-meta">
+      <span class="live-pill"><span class="live-dot" id="miniLiveDot"></span><span id="miniStatusText">तैयार</span></span>
+      <span id="miniTimeText">00:00</span>
+    </div>
+    <div class="now-title" id="miniSongTitle">उगी हे दीनानाथ</div>
+    <div class="now-artist" id="miniSongArtist">कल्पना पटवारी</div>
+    <div class="controls-row">
+      <div class="btn-group">
+        <button type="button" class="ctrl-btn" id="miniPrev" aria-label="पिछला गीत">❮❮</button>
+        <button type="button" class="ctrl-btn primary" id="miniPlay" aria-label="Play or pause">▶</button>
+        <button type="button" class="ctrl-btn" id="miniNext" aria-label="अगला गीत">❯❯</button>
+      </div>
+      <div class="vol-wrap">
+        <label for="miniVol" aria-label="Volume">🔊</label>
+        <input id="miniVol" type="range" min="0" max="100" value="55">
+      </div>
+    </div>
+    <div class="mini-notice" id="miniNotice">इस मिनी विंडो को खुला रखकर आप मुख्य टैब में किसी भी अन्य पेज पर जा सकते हैं।</div>
+    <div class="mini-actions-foot">
+      <span id="miniQueuePos">गीत 01 / 22</span>
+      <a id="miniOpenYt" href="https://www.youtube.com/watch?v=FGQ0SCK1AtE" target="_blank" rel="noopener noreferrer">YouTube पर सुनें ↗</a>
+    </div>
+  </section>
+
+  <section class="queue-box" aria-label="गीत कतार">
+    <div class="queue-head">
+      <span>आगामी छठ गीत कतार</span>
+      <span id="miniQueueCount">22 गीत</span>
+    </div>
+    <div class="queue-list" id="miniQueueList"></div>
+  </section>
+</main>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  'use strict';
+  const cfg = window.CHHATH_SITE_CONFIG || {};
+  const tracks = cfg.tracks || [];
+  const STATE_KEY = 'chhath-player-state';
+  const OWNER_KEY = 'chhath-active-owner';
+  const MINI_ID = 'mini-' + Math.random().toString(36).slice(2, 8) + '-' + Date.now().toString(36);
+  const byId = (id) => document.getElementById(id);
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }
+  };
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('pip') === '1') document.body.classList.add('is-pip');
+
+  let savedState = null;
+  try { savedState = JSON.parse(store.get(STATE_KEY) || 'null'); } catch {}
+
+  const initIdx = clamp(Number(params.has('track') ? params.get('track') : (savedState?.index ?? 0)) || 0, 0, Math.max(0, tracks.length - 1));
+  const initTime = Math.max(0, Number(params.has('t') ? params.get('t') : (savedState?.time ?? 0)) || 0);
+  const initVol = clamp(Number(params.has('vol') ? params.get('vol') : (savedState?.musicVol ?? store.get('chhath-music-vol') ?? 55)) || 55, 0, 100);
+  const isIOS = /iP(hone|ad|od)/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(navigator.userAgent || '');
+
+  const state = {
+    index: initIdx,
+    resumeTime: initTime,
+    vol: initVol,
+    playing: false,
+    wantsPlay: params.get('autoplay') !== '0',
+    player: null,
+    ytReady: false,
+    queueOrder: Array.isArray(savedState?.queueOrder) && savedState.queueOrder.length === tracks.length
+      ? savedState.queueOrder
+      : tracks.map((_, i) => i)
+  };
+
+  const bc = typeof BroadcastChannel === 'function' ? new BroadcastChannel('chhath-player') : null;
+  const currentTrack = () => tracks[state.index] || tracks[0] || { title: 'छठ गीत', artist: '', videoId: '', start: 0 };
+
+  const formatTime = (sec) => {
+    const s = Math.max(0, Math.floor(Number(sec) || 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+  };
+
+  const getPlayerTime = () => {
+    try {
+      if (state.player && typeof state.player.getCurrentTime === 'function') {
+        return Math.max(0, Number(state.player.getCurrentTime()) || 0);
+      }
+    } catch {}
+    return state.resumeTime || 0;
+  };
+
+  const persistState = (extra = {}) => {
+    const payload = {
+      index: state.index,
+      time: getPlayerTime(),
+      queueOrder: state.queueOrder,
+      playing: state.playing,
+      mode: 'curated',
+      musicVol: state.vol,
+      ownerId: MINI_ID,
+      updatedAt: Date.now(),
+      ...extra
+    };
+    store.set(STATE_KEY, JSON.stringify(payload));
+    store.set('chhath-music-vol', String(state.vol));
+    return payload;
+  };
+
+  const postChannel = (msg) => {
+    try { if (bc) bc.postMessage(msg); } catch {}
+  };
+
+  const claimPlayback = () => {
+    const ownerPayload = { ownerId: MINI_ID, index: state.index, time: getPlayerTime(), at: Date.now() };
+    store.set(OWNER_KEY, JSON.stringify(ownerPayload));
+    postChannel({ type: 'claim-playback', ...ownerPayload });
+  };
+
+  const pauseSafely = () => {
+    state.wantsPlay = false;
+    state.playing = false;
+    try {
+      if (state.player && typeof state.player.pauseVideo === 'function') state.player.pauseVideo();
+    } catch {}
+    syncUI();
+  };
+
+  if (bc) {
+    bc.onmessage = (ev) => {
+      const m = ev.data || {};
+      if (m.ownerId === MINI_ID) return;
+      if (m.type === 'claim-playback') {
+        pauseSafely();
+        byId('miniNotice').textContent = 'मुख्य पृष्ठ पर गीत प्रारंभ हुआ — दोहरी आवाज़ रोकने के लिए यहाँ विराम दिया गया।';
+      }
+    };
+  }
+
+  window.addEventListener('storage', (ev) => {
+    if (ev.key === OWNER_KEY && ev.newValue) {
+      try {
+        const d = JSON.parse(ev.newValue);
+        if (d.ownerId && d.ownerId !== MINI_ID) pauseSafely();
+      } catch {}
+    }
+  });
+
+  function syncMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const t = currentTrack();
+    try {
+      const artJpg = new URL('assets/share-preview.jpg', location.href).href;
+      const artSvg = new URL('assets/sun-icon.svg', location.href).href;
+      if (typeof MediaMetadata === 'function') {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: t.title,
+          artist: t.artist || 'छठ भक्ति संगीत',
+          album: 'छठ महापर्व • मिनी प्लेयर',
+          artwork: [
+            { src: artJpg, sizes: '1200x630', type: 'image/jpeg' },
+            { src: artSvg, sizes: 'any', type: 'image/svg+xml' }
+          ]
+        });
+      }
+      navigator.mediaSession.playbackState = state.playing ? 'playing' : 'paused';
+    } catch {}
+
+    const handlers = {
+      play: () => togglePlay(true),
+      pause: () => pauseSafely(),
+      previoustrack: () => changeTrack(-1),
+      nexttrack: () => changeTrack(1),
+      stop: () => pauseSafely()
+    };
+    for (const [action, fn] of Object.entries(handlers)) {
+      try { navigator.mediaSession.setActionHandler(action, fn); } catch {}
+    }
+
+    try {
+      if (typeof navigator.mediaSession.setPositionState === 'function' && state.player && typeof state.player.getDuration === 'function') {
+        const dur = Number(state.player.getDuration()) || 0;
+        const pos = getPlayerTime();
+        if (dur > 0 && pos >= 0 && pos <= dur) {
+          navigator.mediaSession.setPositionState({ duration: dur, playbackRate: 1, position: pos });
+        }
+      }
+    } catch {}
+  }
+
+  function renderQueue() {
+    const list = byId('miniQueueList');
+    if (!list) return;
+    list.replaceChildren();
+    state.queueOrder.forEach((trackIdx, qPos) => {
+      const s = tracks[trackIdx];
+      if (!s) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'q-item' + (trackIdx === state.index ? ' active' : '');
+      const num = document.createElement('span');
+      num.className = 'q-num';
+      num.textContent = String(qPos + 1).padStart(2, '0');
+      const copy = document.createElement('span');
+      copy.className = 'q-copy';
+      const strong = document.createElement('strong');
+      strong.textContent = s.title;
+      const small = document.createElement('small');
+      small.textContent = s.artist;
+      copy.append(strong, small);
+      const mark = document.createElement('span');
+      mark.className = 'q-mark';
+      mark.textContent = trackIdx === state.index && state.playing ? '♫' : '▶';
+      btn.append(num, copy, mark);
+      btn.onclick = () => { state.resumeTime = s.start || 0; loadTrack(trackIdx, true); };
+      list.append(btn);
+    });
+  }
+
+  function syncUI() {
+    const t = currentTrack();
+    byId('miniSongTitle').textContent = t.title;
+    byId('miniSongArtist').textContent = `${t.artist || 'भक्ति गीत'} · T-Series Bhakti Sagar`;
+    byId('miniPlay').textContent = state.playing ? 'Ⅱ' : '▶';
+    byId('miniLiveDot').classList.toggle('playing', state.playing);
+    byId('miniStatusText').textContent = state.playing ? 'चल रहा है' : 'रुका हुआ';
+    byId('miniTimeText').textContent = formatTime(getPlayerTime());
+    byId('miniQueuePos').textContent = `गीत ${String(state.index + 1).padStart(2, '0')} / ${tracks.length}`;
+    byId('miniQueueCount').textContent = `${tracks.length} गीत`;
+    byId('miniVol').value = String(state.vol);
+    byId('miniOpenYt').href = `https://www.youtube.com/watch?v=${t.videoId}&t=${Math.floor(getPlayerTime() || t.start || 0)}s`;
+    document.title = `${state.playing ? '▶ ' : ''}${t.title} — छठ मिनी प्लेयर`;
+    renderQueue();
+    syncMediaSession();
+    const payload = persistState();
+    postChannel({ type: 'state-sync', ...payload });
+  }
+
+  function loadYouTubeApi() {
+    if (window.YT?.Player) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (ok) => { if (settled) return; settled = true; clearTimeout(timer); resolve(ok); };
+      const timer = setTimeout(() => finish(Boolean(window.YT?.Player)), 9500);
+      window.onYouTubeIframeAPIReady = () => finish(Boolean(window.YT?.Player));
+      const s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      s.async = true;
+      s.onerror = () => finish(false);
+      document.head.append(s);
+    });
+  }
+
+  function loadTrack(idx, autoplay = true) {
+    if (!tracks.length) return;
+    state.index = (idx + tracks.length) % tracks.length;
+    state.wantsPlay = autoplay;
+    const t = currentTrack();
+    const startSec = state.resumeTime && state.resumeTime >= (t.start || 0) ? state.resumeTime : (t.start || 0);
+    state.resumeTime = 0;
+
+    if (autoplay) claimPlayback();
+
+    if (state.player && typeof state.player.loadVideoById === 'function') {
+      try {
+        state.player.setVolume(state.vol);
+        state.player.loadVideoById({
+          videoId: t.videoId,
+          startSeconds: startSec,
+          ...(t.end ? { endSeconds: t.end } : {})
+        });
+        if (!autoplay) state.player.pauseVideo();
+        syncUI();
+        return;
+      } catch {}
+    }
+
+    syncUI();
+    loadYouTubeApi().then((ok) => {
+      if (!ok) {
+        byId('miniNotice').textContent = 'YouTube player लोड नहीं हो सका। नीचे दिए लिंक से सीधे YouTube पर सुनें।';
+        return;
+      }
+      const host = byId('miniYtHost');
+      host.replaceChildren();
+      const div = document.createElement('div');
+      div.id = 'miniYtMount';
+      host.append(div);
+      state.player = new YT.Player('miniYtMount', {
+        height: '100%',
+        width: '100%',
+        videoId: t.videoId,
+        playerVars: {
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          start: Math.floor(startSec),
+          enablejsapi: 1,
+          autoplay: autoplay ? 1 : 0,
+          origin: location.origin.startsWith('http') ? location.origin : undefined
+        },
+        events: {
+          onReady: (e) => {
+            try {
+              e.target.setVolume(state.vol);
+              e.target.loadVideoById({
+                videoId: t.videoId,
+                startSeconds: startSec,
+                ...(t.end ? { endSeconds: t.end } : {})
+              });
+              if (!autoplay) e.target.pauseVideo();
+            } catch {}
+          },
+          onStateChange: (e) => {
+            const Y = window.YT.PlayerState;
+            if (e.data === Y.PLAYING) {
+              state.playing = true;
+              claimPlayback();
+              if (isIOS) {
+                byId('miniNotice').textContent = 'iOS Safari: टैब खुला रखते हुए सुनें; लॉक स्क्रीन या दूसरे ऐप में जाने पर ब्राउज़र नीति के कारण विराम हो सकता है।';
+              } else if (isAndroid) {
+                byId('miniNotice').textContent = 'नोटिफिकेशन / मीडिया पैनल से भी Play, Pause, Next व Previous नियंत्रित किया जा सकता है।';
+              } else {
+                byId('miniNotice').textContent = 'डेस्कटॉप पर दूसरे टैब या वेबसाइट देखते हुए भी यहाँ भक्ति संगीत चलता रहेगा।';
+              }
+              syncUI();
+            } else if (e.data === Y.PAUSED) {
+              state.playing = false;
+              syncUI();
+            } else if (e.data === Y.ENDED) {
+              state.playing = false;
+              changeTrack(1);
+            }
+          },
+          onAutoplayBlocked: () => {
+            state.playing = false;
+            byId('miniNotice').textContent = 'आपके ब्राउज़र ने ऑटो-प्ले रोका है — सुनने के लिए ऊपर ▶ बटन दबाएँ।';
+            syncUI();
+          },
+          onError: () => {
+            state.playing = false;
+            byId('miniNotice').textContent = 'यह गीत एम्बेड में उपलब्ध नहीं है — ❯❯ से अगला गीत चुनें या YouTube पर सुनें।';
+            syncUI();
+          }
+        }
+      });
+    });
+  }
+
+  function changeTrack(delta) {
+    state.resumeTime = 0;
+    loadTrack(state.index + delta, true);
+  }
+
+  function togglePlay(forcePlay) {
+    if (!state.player) {
+      loadTrack(state.index, true);
+      return;
+    }
+    try {
+      const cur = state.player.getPlayerState();
+      if (forcePlay === true || cur !== window.YT.PlayerState.PLAYING) {
+        claimPlayback();
+        state.player.playVideo();
+      } else {
+        state.player.pauseVideo();
+      }
+    } catch {
+      loadTrack(state.index, true);
+    }
+  }
+
+  byId('miniPlay').onclick = () => togglePlay();
+  byId('miniPrev').onclick = () => changeTrack(-1);
+  byId('miniNext').onclick = () => changeTrack(1);
+  byId('miniVol').oninput = (e) => {
+    state.vol = clamp(Number(e.target.value) || 55, 0, 100);
+    try { state.player?.setVolume(state.vol); } catch {}
+    persistState();
+  };
+
+  const returnLink = byId('returnGhatLink');
+  if (returnLink) {
+    returnLink.addEventListener('click', (e) => {
+      persistState();
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.focus(); e.preventDefault(); } catch {}
+      }
+    });
+  }
+
+  setInterval(() => {
+    if (!state.player || !state.playing) return;
+    byId('miniTimeText').textContent = formatTime(getPlayerTime());
+    const t = currentTrack();
+    if (t.end && getPlayerTime() >= t.end - 0.4) {
+      changeTrack(1);
+      return;
+    }
+    const payload = persistState();
+    postChannel({ type: 'state-sync', ...payload });
+    syncMediaSession();
+  }, 1000);
+
+  window.addEventListener('pagehide', () => persistState());
+  loadTrack(state.index, state.wantsPlay);
+});
+</script>
+</body>
+</html>

@@ -2029,7 +2029,8 @@ body[data-scene=bahangi] .sun-orb {
 }
 
 .header-yt-chip,
-.yt-music-chip {
+.yt-music-chip,
+.mini-player-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -2043,11 +2044,13 @@ body[data-scene=bahangi] .sun-orb {
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
   transition: background .2s, border-color .2s, transform .2s
 }
 
 .header-yt-chip:hover,
-.yt-music-chip:hover {
+.yt-music-chip:hover,
+.mini-player-chip:hover {
   background: rgba(235, 179, 98, .2);
   border-color: #f6c978;
   color: #fff6e4;
@@ -2089,7 +2092,8 @@ body[data-scene=bahangi] .sun-orb {
   gap: 10px
 }
 
-.yt-music-chip {
+.yt-music-chip,
+.mini-player-chip {
   height: 45px;
   padding: 0 16px;
   font-size: 14px
@@ -2381,14 +2385,36 @@ body[data-scene=bahangi] .sun-orb {
   cursor: pointer
 }
 
+.dock-mini {
+  border: 1px solid rgba(255, 224, 174, .34);
+  background: rgba(255, 224, 174, .08);
+  color: #ffe2b3;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .2s, border-color .2s
+}
+
+.dock-mini:hover {
+  background: rgba(255, 224, 174, .18);
+  border-color: #f4c67a
+}
+
 .dock-library {
   border-left: 1px solid rgba(255, 229, 185, .24) !important;
   border: 0;
   background: none;
-  padding: 9px 0 9px 20px;
+  padding: 9px 0 9px 16px;
   color: #f5deb9;
   font-size: 13px;
-  white-space: nowrap
+  white-space: nowrap;
+  flex-shrink: 0
 }
 
 .dock-library small {
@@ -2399,6 +2425,51 @@ body[data-scene=bahangi] .sun-orb {
   padding: 4px 6px;
   border-radius: 30px;
   margin-left: 4px
+}
+
+.mini-popup-banner {
+  position: fixed;
+  z-index: 82;
+  left: 50%;
+  bottom: 108px;
+  transform: translateX(-50%);
+  width: min(360px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(18, 25, 26, .96);
+  border: 1px solid rgba(246, 200, 118, .52);
+  color: #f8ebd6;
+  font-size: 12.5px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .5)
+}
+
+.mini-popup-banner[hidden] {
+  display: none
+}
+
+.mini-popup-banner a {
+  color: #ffd388;
+  font-weight: 700;
+  text-decoration: underline
+}
+
+.mini-popup-banner button {
+  border: 0;
+  background: none;
+  color: #ccb89c;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px
+}
+
+.player-dock.external-playing .playing-indicator {
+  background: #60a5fa;
+  box-shadow: 0 0 10px rgba(96, 165, 250, .85);
+  animation: statusPulse 1.4s ease infinite
 }
 
 .toast {
@@ -2563,7 +2634,10 @@ body[data-scene=bahangi] .sun-orb {
   border: 1px solid var(--line);
   border-radius: 30px;
   min-height: 35px;
-  min-width: 35px
+  min-width: 35px;
+  padding: 0 10px;
+  font-size: 12px;
+  white-space: nowrap
 }
 
 .drawer-controls button.drawer-primary {
@@ -3292,8 +3366,21 @@ body[data-scene=bahangi] .sun-orb {
     font-size: 14px
   }
 
-  .dock-library span {
+  .dock-library span,
+  .dock-mini span {
     display: none
+  }
+
+  .dock-mini {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    font-size: 14px
+  }
+
+  .dock-library {
+    padding: 7px 0 7px 10px
   }
 
   .dock-library small {
@@ -3526,11 +3613,15 @@ body.panel-open {
 @media(max-width:480px) {
   .player-dock {
     padding: 7px 10px;
-    gap: 7px
+    gap: 6px
   }
 
   .dock-track {
-    min-width: 80px
+    min-width: 60px
+  }
+
+  .dock-actions {
+    gap: 8px
   }
 
   .dock-track strong {
@@ -3545,8 +3636,21 @@ body.panel-open {
     display: none
   }
 
-  .dock-library span {
+  .dock-library span,
+  .dock-mini span {
     display: none
+  }
+
+  .dock-mini {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    font-size: 14px
+  }
+
+  .dock-library {
+    padding: 7px 0 7px 10px
   }
 
   .ritual-action {

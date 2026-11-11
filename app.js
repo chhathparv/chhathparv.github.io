@@ -6,23 +6,104 @@
   const all=(selector)=>[...document.querySelectorAll(selector)];
   const clamp=(number,min,max)=>Math.max(min,Math.min(max,number));
   const store={get:(key)=>{try{return localStorage.getItem(key)}catch{return null}},set:(key,value)=>{try{localStorage.setItem(key,value)}catch{}}};
+  const PLAYER_STATE_KEY='chhath-player-state';
+  const OWNER_KEY='chhath-active-owner';
+  const INSTANCE_ID='main-'+Math.random().toString(36).slice(2,8)+'-'+Date.now().toString(36);
+  const ua=navigator.userAgent||'';
+  const isIOS=/iP(hone|ad|od)/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const isAndroid=/Android/i.test(ua);
+  const isMobileDevice=isIOS||isAndroid;
+  let savedPlayer=null;
+  try{savedPlayer=JSON.parse(store.get(PLAYER_STATE_KEY)||'null')}catch{}
+  const initialIndex=songs.length?clamp(Number(savedPlayer?.index??0)||0,0,songs.length-1):0;
+  const initialQueue=(Array.isArray(savedPlayer?.queueOrder)&&savedPlayer.queueOrder.length===songs.length)?savedPlayer.queueOrder:songs.map((_,i)=>i);
   const ui={song:byId('nowSong'),artist:byId('nowArtist'),notice:byId('playerNotice')};
-  const state={index:0,scene:'sandhya',playing:false,wantsPlay:false,mode:'curated',tab:'curated',youTube:null,youtubeReady:false,ytAPILoading:false,musicVol:clamp(Number(store.get('chhath-music-vol')??55),0,100),fxVol:clamp(Number(store.get('chhath-fx-vol')??25),0,100),speechVol:clamp(Number(store.get('chhath-voice-vol')??65),0,100),ambient:false,ambientContext:null,ambientNodes:null,lastSound:0,toastTimer:null,playlist:store.get('chhath-playlist')||config.publicPlaylistUrl||'',reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
+  const state={index:initialIndex,resumeTime:Math.max(0,Number(savedPlayer?.time??0)||0),queueOrder:initialQueue,scene:'sandhya',playing:false,externalPlaying:false,wantsPlay:false,mode:'curated',tab:'curated',youTube:null,youtubeReady:false,ytAPILoading:false,pipWindow:null,popupWindow:null,musicVol:clamp(Number(savedPlayer?.musicVol??store.get('chhath-music-vol')??55),0,100),fxVol:clamp(Number(store.get('chhath-fx-vol')??25),0,100),speechVol:clamp(Number(store.get('chhath-voice-vol')??65),0,100),ambient:false,ambientContext:null,ambientNodes:null,lastSound:0,toastTimer:null,playlist:store.get('chhath-playlist')||config.publicPlaylistUrl||'',reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
   const track=()=>songs[state.index]||songs[0];
+  const playerChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('chhath-player'):null;
   const safeUrl=(value)=>{try{const u=new URL(value);return u.protocol==='https:'&&(u.hostname==='youtube.com'||u.hostname==='www.youtube.com'||u.hostname==='music.youtube.com')?u:null}catch{return null}};
   const playlistId=(value)=>{const u=safeUrl(value);return u?(u.searchParams.get('list')||'').match(/^[A-Za-z0-9_-]{10,50}$/)?.[0]||null:null};
   let toastTick=null;
   function toast(msg){const n=byId('toast');if(!n)return;n.textContent=msg;n.classList.add('show');clearTimeout(toastTick);toastTick=setTimeout(()=>n.classList.remove('show'),3400)}
+  function currentPlayerTime(){
+    try{
+      if(state.youTube&&typeof state.youTube.getCurrentTime==='function'){
+        const cur=Number(state.youTube.getCurrentTime());
+        if(Number.isFinite(cur)&&cur>=0)return cur;
+      }
+    }catch{}
+    return state.resumeTime||0;
+  }
+  function persistPlayerState(extra={}){
+    const payload={index:state.index,time:currentPlayerTime(),queueOrder:state.queueOrder,playing:state.playing,mode:state.mode,musicVol:state.musicVol,ownerId:INSTANCE_ID,updatedAt:Date.now(),...extra};
+    store.set(PLAYER_STATE_KEY,JSON.stringify(payload));
+    return payload;
+  }
+  function postPlayerChannel(msg){try{if(playerChannel)playerChannel.postMessage(msg)}catch{}}
+  function pauseYouTubeSafely(){
+    state.wantsPlay=false;
+    state.playing=false;
+    try{if(state.youTube&&typeof state.youTube.pauseVideo==='function')state.youTube.pauseVideo()}catch{}
+  }
+  function claimPlaybackOwnership(){
+    state.externalPlaying=false;
+    const payload={ownerId:INSTANCE_ID,index:state.index,time:currentPlayerTime(),at:Date.now()};
+    store.set(OWNER_KEY,JSON.stringify(payload));
+    postPlayerChannel({type:'claim-playback',...payload});
+  }
+  function syncMediaSession(){
+    if(!('mediaSession' in navigator)||state.mode!=='curated')return;
+    const t=track();
+    if(!t)return;
+    try{
+      const artJpg=new URL('assets/share-preview.jpg',location.href).href;
+      const artSvg=new URL('assets/sun-icon.svg',location.href).href;
+      if(typeof MediaMetadata==='function'){
+        navigator.mediaSession.metadata=new MediaMetadata({
+          title:t.title,
+          artist:t.artist||'छठ भक्ति संगीत',
+          album:'छठ महापर्व • डिजिटल घाट',
+          artwork:[{src:artJpg,sizes:'1200x630',type:'image/jpeg'},{src:artSvg,sizes:'any',type:'image/svg+xml'}]
+        });
+      }
+      navigator.mediaSession.playbackState=state.playing?'playing':'paused';
+    }catch{}
+    const handlers={
+      play:()=>{if(!state.playing)toggleMusic();else try{claimPlaybackOwnership();state.youTube?.playVideo()}catch{}},
+      pause:()=>{pauseYouTubeSafely();updateMusic()},
+      previoustrack:()=>changeSong(-1,true),
+      nexttrack:()=>changeSong(1,true),
+      stop:()=>{pauseYouTubeSafely();updateMusic()}
+    };
+    for(const [action,fn] of Object.entries(handlers)){
+      try{navigator.mediaSession.setActionHandler(action,fn)}catch{}
+    }
+    try{
+      if(typeof navigator.mediaSession.setPositionState==='function'&&state.youTube&&typeof state.youTube.getDuration==='function'){
+        const dur=Number(state.youTube.getDuration())||0;
+        const pos=currentPlayerTime();
+        if(dur>0&&pos>=0&&pos<=dur){
+          navigator.mediaSession.setPositionState({duration:dur,playbackRate:1,position:pos});
+        }
+      }
+    }catch{}
+  }
   function updateMusic(){
     ui.song.textContent=state.mode==='mine'?'आपकी YouTube playlist':track().title;
     ui.artist.textContent=state.mode==='mine'?'Official YouTube playlist player':`${track().artist} · T-Series Bhakti Sagar`;
     byId('nowSong').title=ui.song.textContent;
     const symbol=state.playing?'Ⅱ':'▶';
     for(const id of ['mainPlay','drawerPlay']){const button=byId(id);if(!button)continue;button.textContent=id==='drawerPlay'?(state.playing?'Ⅱ Pause':'▶ Play'):symbol;button.setAttribute('aria-label',state.playing?'गीत रोकें':'गीत सुनें')}
-    byId('playerDock').classList.toggle('is-playing',state.playing);
+    const dock=byId('playerDock');
+    dock.classList.toggle('is-playing',state.playing);
+    dock.classList.toggle('external-playing',!state.playing&&state.externalPlaying);
+    const modeLabel=byId('dockModeLabel');
+    if(modeLabel)modeLabel.textContent=state.externalPlaying&&!state.playing?'मिनी प्लेयर में चल रहा है':'भक्ति संगीत • 22 गीत';
     byId('watchYoutube').href=state.mode==='mine'?(state.playlist||config.publicPlaylistUrl):`https://www.youtube.com/watch?v=${track().videoId}&t=${track().start}s`;
     const alt=byId('alternateYoutube');if(alt)alt.href=byId('watchYoutube').href;
     renderSongs();
+    syncMediaSession();
+    persistPlayerState();
   }
   function setNotice(message){if(ui.notice)ui.notice.textContent=message}
   function renderSongs(){
@@ -73,14 +154,75 @@
     return ytPromise;
   }
   function removeYT(){if(state.youTube){try{state.youTube.destroy()}catch{}state.youTube=null}}
+  function refreshExternalSyncUI(){
+    const t=track();
+    if(!t)return;
+    ui.song.textContent=t.title;
+    ui.artist.textContent=`${t.artist} · T-Series Bhakti Sagar`;
+    byId('nowSong').title=t.title;
+    const dock=byId('playerDock');
+    dock.classList.toggle('is-playing',state.playing);
+    dock.classList.toggle('external-playing',!state.playing&&state.externalPlaying);
+    const modeLabel=byId('dockModeLabel');
+    if(modeLabel)modeLabel.textContent=state.externalPlaying&&!state.playing?'मिनी प्लेयर में चल रहा है':'भक्ति संगीत • 22 गीत';
+    renderSongs();
+    syncMediaSession();
+  }
+
+  if(playerChannel){
+    playerChannel.onmessage=(ev)=>{
+      const m=ev.data||{};
+      if(!m.ownerId||m.ownerId===INSTANCE_ID)return;
+      if(m.type==='claim-playback'){
+        pauseYouTubeSafely();
+        state.externalPlaying=true;
+        if(Number.isInteger(m.index)&&songs.length)state.index=clamp(m.index,0,songs.length-1);
+        if(Number.isFinite(Number(m.time)))state.resumeTime=Math.max(0,Number(m.time));
+        refreshExternalSyncUI();
+      }else if(m.type==='state-sync'&&!state.playing){
+        if(Number.isInteger(m.index)&&songs.length)state.index=clamp(m.index,0,songs.length-1);
+        if(Number.isFinite(Number(m.time)))state.resumeTime=Math.max(0,Number(m.time));
+        state.externalPlaying=Boolean(m.playing);
+        refreshExternalSyncUI();
+      }
+    };
+  }
+
+  window.addEventListener('storage',(ev)=>{
+    if(ev.key===OWNER_KEY&&ev.newValue){
+      try{
+        const d=JSON.parse(ev.newValue);
+        if(d.ownerId&&d.ownerId!==INSTANCE_ID){
+          pauseYouTubeSafely();
+          state.externalPlaying=true;
+          if(Number.isInteger(d.index)&&songs.length)state.index=clamp(d.index,0,songs.length-1);
+          refreshExternalSyncUI();
+        }
+      }catch{}
+    }else if(ev.key===PLAYER_STATE_KEY&&ev.newValue&&!state.playing){
+      try{
+        const d=JSON.parse(ev.newValue);
+        if(d.ownerId&&d.ownerId!==INSTANCE_ID){
+          if(Number.isInteger(d.index)&&songs.length)state.index=clamp(d.index,0,songs.length-1);
+          if(Number.isFinite(Number(d.time)))state.resumeTime=Math.max(0,Number(d.time));
+          state.externalPlaying=Boolean(d.playing);
+          refreshExternalSyncUI();
+        }
+      }catch{}
+    }
+  });
+
   function loadCurated(index,autoplay=true){
     state.mode='curated';state.index=(index+songs.length)%songs.length;state.wantsPlay=autoplay;
-    updateMusic();
+    if(autoplay)claimPlaybackOwnership();
     const playingTrack=track();
+    const startSec=(state.resumeTime&&state.resumeTime>=(playingTrack.start||0))?Math.floor(state.resumeTime):(playingTrack.start||0);
+    state.resumeTime=0;
+    updateMusic();
     if(state.youTube && typeof state.youTube.loadVideoById==='function'){
       try{
         state.youTube.setVolume(state.musicVol);
-        state.youTube.loadVideoById({videoId:playingTrack.videoId,startSeconds:playingTrack.start,...(playingTrack.end?{endSeconds:playingTrack.end}:{})});
+        state.youTube.loadVideoById({videoId:playingTrack.videoId,startSeconds:startSec,...(playingTrack.end?{endSeconds:playingTrack.end}:{})});
         if(!state.wantsPlay) state.youTube.pauseVideo();
         else toast(`♫ ${playingTrack.title}`);
         return;
@@ -95,25 +237,122 @@
       if(!ok){fallbackIframe(track());return}
       const nextTrack=track();
       state.youTube=new YT.Player('youtubePlayer',{height:'240',width:'425',videoId:nextTrack.videoId,
-        playerVars:{playsinline:1,rel:0,modestbranding:1,start:nextTrack.start,enablejsapi:1,autoplay:state.wantsPlay?1:0,origin:location.origin.startsWith('http')?location.origin:undefined},
-        events:{onReady:e=>{try{e.target.setVolume(state.musicVol);e.target.loadVideoById({videoId:nextTrack.videoId,startSeconds:nextTrack.start,...(nextTrack.end?{endSeconds:nextTrack.end}: {})});if(!state.wantsPlay)e.target.pauseVideo()}catch{}setNotice('YouTube player तैयार है। ▶ नहीं चलता हो तो वीडियो के अंदर Play दबाएँ या नीचे YouTube link खोलें।')},
-                onStateChange:e=>{if(state.mode!=='curated')return;const Y=window.YT.PlayerState;if(e.data===Y.PLAYING){state.playing=true;updateMusic()}else if(e.data===Y.PAUSED){state.playing=false;updateMusic()}else if(e.data===Y.ENDED){state.playing=false;changeSong(1,true)}},
+        playerVars:{playsinline:1,rel:0,modestbranding:1,start:startSec,enablejsapi:1,autoplay:state.wantsPlay?1:0,origin:location.origin.startsWith('http')?location.origin:undefined},
+        events:{onReady:e=>{try{e.target.setVolume(state.musicVol);e.target.loadVideoById({videoId:nextTrack.videoId,startSeconds:startSec,...(nextTrack.end?{endSeconds:nextTrack.end}: {})});if(!state.wantsPlay)e.target.pauseVideo()}catch{}setNotice('YouTube player तैयार है। ▶ नहीं चलता हो तो वीडियो के अंदर Play दबाएँ या नीचे YouTube link खोलें।')},
+                onStateChange:e=>{if(state.mode!=='curated')return;const Y=window.YT.PlayerState;if(e.data===Y.PLAYING){state.playing=true;state.externalPlaying=false;claimPlaybackOwnership();updateMusic()}else if(e.data===Y.PAUSED){state.playing=false;updateMusic()}else if(e.data===Y.ENDED){state.playing=false;changeSong(1,true)}},
                 onAutoplayBlocked:()=>{state.playing=false;updateMusic();setNotice('Browser ने autoplay रोक दिया है। कृपया player पर Play दबाएँ।');toast('दोबारा ▶ Play दबाएँ या ♫ गीत सूची से चलाएँ।')},
                 onError:e=>{state.playing=false;updateMusic();setNotice('इस गीत को यहाँ चलाने की अनुमति नहीं है। नीचे सीधे YouTube पर सुनें।');toast('यह गीत embed में उपलब्ध नहीं है — ❯❯ से अगला गीत सुनें।')}}});
     });
   }
   function fallbackIframe(s){const mount=byId('youtubeMount');mount.replaceChildren();const frame=document.createElement('iframe');frame.title=`${s.title} official YouTube recording`;frame.allow='autoplay; encrypted-media; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.src=`https://www.youtube-nocookie.com/embed/${s.videoId}?start=${s.start}${s.end?`&end=${s.end}`:''}&autoplay=${state.wantsPlay?1:0}&playsinline=1`;mount.append(frame);state.playing=false;updateMusic();setNotice('YouTube controls के साथ गीत सुनें। यदि player न खुले तो YouTube लिंक इस्तेमाल करें।')}
-  function chooseTrack(index,autoplay=true){libraryTab('curated');loadCurated(index,autoplay)}
-  function changeSong(delta,autoplay=true){if(state.mode==='mine'){toast('आपकी playlist में अगले गीत के लिए YouTube player के controls इस्तेमाल करें।');return}chooseTrack(state.index+delta,autoplay)}
+  function chooseTrack(index,autoplay=true){state.resumeTime=0;libraryTab('curated');loadCurated(index,autoplay)}
+  function changeSong(delta,autoplay=true){
+    if(state.mode==='mine'){toast('आपकी playlist में अगले गीत के लिए YouTube player के controls इस्तेमाल करें।');return}
+    const qPos=Math.max(0,state.queueOrder.indexOf(state.index));
+    const nextQPos=(qPos+delta+state.queueOrder.length)%state.queueOrder.length;
+    chooseTrack(state.queueOrder[nextQPos]??0,autoplay);
+  }
   function toggleMusic(){
     if(state.mode==='mine'){openDrawer('music');toast('अपनी playlist को YouTube player के Play button से चलाएँ।');return}
-    if(!state.youTube){chooseTrack(state.index,true);return}
-    try{const now=state.youTube.getPlayerState();if(now===YT.PlayerState.PLAYING)state.youTube.pauseVideo();else state.youTube.playVideo()}catch{chooseTrack(state.index,true)}
+    if(!state.youTube){loadCurated(state.index,true);return}
+    try{const now=state.youTube.getPlayerState();if(now===YT.PlayerState.PLAYING){state.youTube.pauseVideo()}else{claimPlaybackOwnership();state.youTube.playVideo()}}catch{loadCurated(state.index,true)}
   }
+
+  function showMiniPopupBanner(url){
+    const banner=byId('miniPopupBanner'),link=byId('miniPopupFallbackLink');
+    if(link)link.href=url;
+    if(banner)banner.hidden=false;
+  }
+
+  function openMiniPlayer(){
+    const curSec=Math.floor(currentPlayerTime());
+    persistPlayerState({time:curSec,playing:false});
+    pauseYouTubeSafely();
+    state.externalPlaying=true;
+    updateMusic();
+
+    const miniUrl=new URL('mini-player.html',location.href);
+    miniUrl.searchParams.set('track',String(state.index));
+    miniUrl.searchParams.set('t',String(curSec));
+    miniUrl.searchParams.set('vol',String(state.musicVol));
+    miniUrl.searchParams.set('autoplay','1');
+
+    const banner=byId('miniPopupBanner');
+    if(banner)banner.hidden=true;
+
+    const canDocPiP=Boolean(!isMobileDevice&&window.documentPictureInPicture&&typeof window.documentPictureInPicture.requestWindow==='function');
+    if(canDocPiP){
+      const pipUrl=new URL(miniUrl.href);
+      pipUrl.searchParams.set('pip','1');
+      window.documentPictureInPicture.requestWindow({width:400,height:540}).then(pipWin=>{
+        state.pipWindow=pipWin;
+        pipWin.document.title='छठ गीत मिनी प्लेयर';
+        pipWin.document.body.style.margin='0';
+        pipWin.document.body.style.background='#121718';
+        pipWin.document.body.style.height='100vh';
+        const frame=pipWin.document.createElement('iframe');
+        frame.src=pipUrl.href;
+        frame.title='छठ गीत फ्लोटिंग मिनी प्लेयर';
+        frame.allow='autoplay; encrypted-media; picture-in-picture';
+        frame.style.cssText='width:100%;height:100%;border:0;display:block;';
+        pipWin.document.body.append(frame);
+        pipWin.addEventListener('pagehide',()=>{
+          state.pipWindow=null;
+          state.externalPlaying=false;
+          try{
+            const latest=JSON.parse(store.get(PLAYER_STATE_KEY)||'null');
+            if(latest&&Number.isInteger(latest.index)){
+              state.index=clamp(latest.index,0,songs.length-1);
+              state.resumeTime=Math.max(0,Number(latest.time)||0);
+            }
+          }catch{}
+          refreshExternalSyncUI();
+        });
+        toast('⧉ फ्लोटिंग मिनी प्लेयर खुल गया — अब आप किसी भी टैब या पेज पर जा सकते हैं!');
+      }).catch(()=>{
+        showMiniPopupBanner(miniUrl.href);
+        toast('⧉ ब्राउज़र ने पॉप-आउट रोका — नीचे दिए लिंक से मिनी प्लेयर खोलें।');
+      });
+      return;
+    }
+
+    let popup=null;
+    try{
+      popup=isMobileDevice
+        ?window.open(miniUrl.href,'chhathMiniPlayer')
+        :window.open(miniUrl.href,'chhathMiniPlayer','width=420,height=580,resizable=yes,scrollbars=yes');
+    }catch{popup=null}
+
+    if(popup&&!popup.closed){
+      state.popupWindow=popup;
+      try{popup.focus()}catch{}
+      toast('⧉ मिनी प्लेयर अलग विंडो/टैब में खुल गया — अब मुख्य टैब में नेविगेट करने पर भी संगीत चलता रहेगा।');
+    }else{
+      state.externalPlaying=false;
+      updateMusic();
+      showMiniPopupBanner(miniUrl.href);
+      toast('⧉ पॉप-अप अवरुद्ध हुआ — नीचे दिए लिंक पर टैप करें।');
+    }
+  }
+
+  if(byId('miniPlayerBtn'))byId('miniPlayerBtn').onclick=openMiniPlayer;
+  if(byId('openMiniPlayerSection'))byId('openMiniPlayerSection').onclick=openMiniPlayer;
+  if(byId('drawerMiniPlayer'))byId('drawerMiniPlayer').onclick=()=>{closePanels(false);openMiniPlayer()};
+  if(byId('closeMiniPopupBanner'))byId('closeMiniPopupBanner').onclick=()=>{const b=byId('miniPopupBanner');if(b)b.hidden=true};
+
   for(const id of ['mainPlay','drawerPlay','startMusic'])byId(id).addEventListener('click',toggleMusic);
   for(const id of ['prevSong','drawerPrev'])byId(id).onclick=()=>changeSong(-1);
   for(const id of ['nextSong','drawerNext'])byId(id).onclick=()=>changeSong(1);
-  setInterval(()=>{if(state.mode!=='curated'||!state.youTube||!state.playing)return;const t=track();if(!t.end)return;try{if(state.youTube.getCurrentTime()>=t.end-.4)changeSong(1,true)}catch{}},550);
+  setInterval(()=>{
+    if(state.mode!=='curated'||!state.youTube||!state.playing)return;
+    const t=track();
+    persistPlayerState();
+    syncMediaSession();
+    if(!t.end)return;
+    try{if(state.youTube.getCurrentTime()>=t.end-.4)changeSong(1,true)}catch{}
+  },1000);
+  window.addEventListener('pagehide',()=>persistPlayerState());
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persistPlayerState()});
   const loadMyPlaylist=()=>{const input=byId('playlistInput').value.trim(),id=playlistId(input);
     if(!id){toast('कृपया सही YouTube playlist URL दें, जिसमें list=... हो।');return}
     state.playlist=input;store.set('chhath-playlist',input);state.mode='mine';state.playing=false;state.wantsPlay=true;removeYT();
