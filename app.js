@@ -1292,12 +1292,14 @@
     fireworks();
   });
 
+  const PUBLIC_SHARE_URL='https://chhathparv.github.io/';
+
   byId('shareSankalpBtn')?.addEventListener('click',async()=>{
     const val=(byId('familyInput')?.value||'').trim()||'हमारा परिवार';
     const msg=`॥ जय छठी मैया ॥ 🌞\n${val} ने छठ महापर्व पर भगवान सूर्य व षष्ठी देवी का पावन संकल्प लिया है।\nछठी मैया सबके जीवन में सुख, स्वास्थ्य और तेज भरें।\nशुभ छठ महापर्व!`;
     try{
-      if(navigator.share){await navigator.share({title:'छठ महापर्व संकल्प',text:msg});return}
-      if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(msg);toast('संकल्प संदेश कॉपी हो गया। WhatsApp पर भेजें।');return}
+      if(navigator.share){await navigator.share({title:'छठ महापर्व संकल्प',text:msg,url:PUBLIC_SHARE_URL});return}
+      if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(msg+'\n\n👉 '+PUBLIC_SHARE_URL);toast('संकल्प संदेश व लिंक कॉपी हो गया। WhatsApp पर भेजें।');return}
     }catch{}
     toast('संकल्प संदेश तैयार है।');
   });
@@ -1514,9 +1516,7 @@
   }));
 
   // Multi-Platform Social Share Handlers
-  const getPublicShareUrl=()=>(location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.protocol==='file:')
-    ?'https://chhathparv.github.io/'
-    :(location.origin+location.pathname);
+  const getPublicShareUrl=()=>PUBLIC_SHARE_URL;
 
   const shareMessage='॥ जय छठी मैया ॥ 🌞\n“आदित्य देव को प्रणाम, छठी मैया का आशीर्वाद सबके जीवन में उजाला लाए।”\nसूर्य देव और छठी मैया आपके परिवार में सुख, उत्तम स्वास्थ्य, तेज और अखंड समृद्धि प्रदान करें।\nछठ महापर्व की हार्दिक शुभकामनाएँ!\n— Abhinav';
 
