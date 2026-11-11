@@ -1194,39 +1194,47 @@
   }));
 
   // Multi-Platform Social Share Handlers
+  const getPublicShareUrl=()=>(location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.protocol==='file:')
+    ?'https://abhi9avx.github.io/'
+    :(location.origin+location.pathname);
+
   const shareMessage='॥ जय छठी मैया ॥ 🌞\n“आदित्य देव को प्रणाम, छठी मैया का आशीर्वाद सबके जीवन में उजाला लाए।”\nसूर्य देव और छठी मैया आपके परिवार में सुख, उत्तम स्वास्थ्य, तेज और अखंड समृद्धि प्रदान करें।\nछठ महापर्व की हार्दिक शुभकामनाएँ!\n— Abhinav';
 
   byId('shareWhatsAppBtn')?.addEventListener('click',()=>{
-    const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage+'\n'+location.href)}`;
+    const publicUrl=getPublicShareUrl();
+    const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage+'\n\n👉 '+publicUrl)}`;
     window.open(url,'_blank','noopener,noreferrer');
     toast('💬 WhatsApp पर शुभकामना संदेश खुल रहा है...');
   });
 
   byId('shareFacebookBtn')?.addEventListener('click',()=>{
-    const url=`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}&quote=${encodeURIComponent(shareMessage)}`;
+    const publicUrl=getPublicShareUrl();
+    const url=`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(publicUrl)}&quote=${encodeURIComponent(shareMessage)}`;
     window.open(url,'_blank','width=600,height=500,noopener,noreferrer');
     toast('🌐 Facebook पर शुभकामना पोस्ट खुल रहा है...');
   });
 
   byId('shareInstagramBtn')?.addEventListener('click',async()=>{
+    const publicUrl=getPublicShareUrl();
     try{
       if(navigator.share){
-        await navigator.share({title:'छठ महापर्व की शुभकामनाएँ',text:shareMessage,url:location.href});
+        await navigator.share({title:'छठ महापर्व की शुभकामनाएँ',text:shareMessage,url:publicUrl});
         toast('📸 Instagram / सोशल मीडिया पर शेयर हुआ!');
         return;
       }
     }catch(e){}
     if(navigator.clipboard?.writeText){
-      await navigator.clipboard.writeText(shareMessage);
-      toast('📸 संदेश कॉपी हो गया! अब Instagram स्टोरी या पोस्ट में पेस्ट करें।');
+      await navigator.clipboard.writeText(shareMessage+'\n\n👉 '+publicUrl);
+      toast('📸 संदेश व लिंक कॉपी हो गया! अब Instagram स्टोरी या पोस्ट में पेस्ट करें।');
     }
   });
 
   byId('shareWish')?.addEventListener('click',async()=>{
+    const publicUrl=getPublicShareUrl();
     try{
       if(navigator.clipboard?.writeText){
-        await navigator.clipboard.writeText(shareMessage);
-        toast('📋 शुभकामना संदेश कॉपी हो गया! परिवार को भेजें।');
+        await navigator.clipboard.writeText(shareMessage+'\n\n👉 '+publicUrl);
+        toast('📋 शुभकामना संदेश व लिंक कॉपी हो गया! परिवार को भेजें।');
         return;
       }
     }catch(e){}
