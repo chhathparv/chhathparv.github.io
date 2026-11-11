@@ -112,7 +112,12 @@ Then open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ## 📜 Credits & License
 
+**Copyright © 2026 Abhinav Kumar (https://chhathparv.github.io/) · All Rights Reserved.**
+
+See [`LICENSE`](LICENSE) for full terms. This repository is proprietary and is **not** released under an open-source license; copying, mirroring, modifying, or redistributing the source code, layout, or original assets without prior written permission is prohibited.
+
 - **Concept, Design & Development**: Abhinav Kumar
+- **Live Site**: [https://chhathparv.github.io/](https://chhathparv.github.io/)
 - **Music**: Curated links to official public YouTube compilation chapters (no audio distributed).
 - **Artwork & Photography**: Authentic cultural photographs & custom-generated high-definition assets (see `assets/PHOTO_CREDITS.md`).
 - Launch scripts for Mac, Windows, and Linux, plus START_HERE.txt.
