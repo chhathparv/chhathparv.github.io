@@ -1349,7 +1349,7 @@
   const offeringFacts={
     thekua:{
       name:'ठेकुआ (महाप्रसाद)',
-      img:'assets/offering-thekua.jpg',
+      img:'assets/offering-thekua.webp',
       caption:'पारंपरिक ठेकुआ महाप्रसाद • सूर्य चक्र अलंकरण',
       leftTitle:'✦ क्या है यह महाप्रसाद?',
       leftSummary:'गुड़, गेहूँ के दरदरे आटे, सौंफ और शुद्ध गाय के देसी घी से बना छठ का अनिवार्य भोग—जिसे नए मिट्टी के चूल्हे पर आम की लकड़ी की पवित्र आंच में बनाया जाता है।',
@@ -1372,7 +1372,7 @@
     },
     soop:{
       name:'सूप और दौरा (अर्घ्य पात्र)',
-      img:'assets/pooja-thali-soop.jpg',
+      img:'assets/pooja-thali-soop.webp',
       caption:'बाँस का सूप व दौरा • पावन अर्घ्य पात्र',
       leftTitle:'✦ क्या है सूप व दौरा?',
       leftSummary:'पारंपरिक कारीगरों द्वारा हाथों से बुने नए बाँस का सूप और दौरा, जिसमें सिंदूर, ठेकुआ, हल्दी-अदरक और मौसमी फल सजाकर भगवान सूर्य को अर्घ्य अर्पित किया जाता है।',
@@ -1395,7 +1395,7 @@
     },
     fruits:{
       name:'फल और गन्ना (मौसमी उपज)',
-      img:'assets/offering-fruits-sugarcane.jpg',
+      img:'assets/offering-fruits-sugarcane.webp',
       caption:'पत्तेदार गन्ना • डाभ नींबू • अक्षत ऋतु फल',
       leftTitle:'✦ क्या है यह प्राकृतिक अर्पण?',
       leftSummary:'धरती माता से प्राप्त ताज़ा, बिना कटी-छँटी मौसमी फसलें—मोटे छिलके वाला डाभ नींबू, केला का पूरा घौंद, पत्तेदार गन्ना, कच्ची हल्दी और अदरक भगवान सूर्य को चढ़ाए जाते हैं।',
@@ -1418,7 +1418,7 @@
     },
     kosi:{
       name:'कोसी भराई (रात्रि जागरण)',
-      img:'assets/ghat-koshi-night.jpg',
+      img:'assets/ghat-koshi-night.webp',
       caption:'कोसी भराई • 24 दीपकों की अखंड ज्योति',
       leftTitle:'✦ क्या है कोसी भराई?',
       leftSummary:'संध्या अर्घ्य के बाद आँगन या घाट पर साबुत गन्नों के मंडप के नीचे मिट्टी के हाथी (ऐरावत) और 24 मिट्टी के दीयों के साथ किया जाने वाला पावन रात्रि अनुष्ठान।',
@@ -1515,7 +1515,7 @@
 
   // Multi-Platform Social Share Handlers
   const getPublicShareUrl=()=>(location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.protocol==='file:')
-    ?'https://abhi9avx.github.io/'
+    ?'https://chhathparv.github.io/'
     :(location.origin+location.pathname);
 
   const shareMessage='॥ जय छठी मैया ॥ 🌞\n“आदित्य देव को प्रणाम, छठी मैया का आशीर्वाद सबके जीवन में उजाला लाए।”\nसूर्य देव और छठी मैया आपके परिवार में सुख, उत्तम स्वास्थ्य, तेज और अखंड समृद्धि प्रदान करें।\nछठ महापर्व की हार्दिक शुभकामनाएँ!\n— Abhinav';

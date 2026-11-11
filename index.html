@@ -7,15 +7,15 @@
 <meta name="theme-color" content="#1b1a1a">
 <meta name="description" content="छठ महापर्व • सूर्य देव और छठी मैया की आराधना — एक डिजिटल घाट। Crafted with devotion by Abhinav.">
 <title>छठ महापर्व — सूर्य की आराधना | Abhinav</title>
-<link rel="canonical" href="https://abhi9avx.github.io/">
+<link rel="canonical" href="https://chhathparv.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="छठ महापर्व — A Digital Ghat">
 <meta property="og:locale" content="hi_IN">
-<meta property="og:url" content="https://abhi9avx.github.io/">
+<meta property="og:url" content="https://chhathparv.github.io/">
 <meta property="og:title" content="छठ महापर्व — सूर्य की आराधना | एक डिजिटल घाट">
 <meta property="og:description" content="डूबते और उगते सूर्य को नमन। 6 पावन घाट दृश्य, गंगा में दीपदान, 22 छठ गीत और पावन पूजा विधि — समर्पित डिजिटल घाट।">
-<meta property="og:image" content="https://abhi9avx.github.io/assets/share-preview.jpg">
-<meta property="og:image:secure_url" content="https://abhi9avx.github.io/assets/share-preview.jpg">
+<meta property="og:image" content="https://chhathparv.github.io/assets/share-preview.jpg">
+<meta property="og:image:secure_url" content="https://chhathparv.github.io/assets/share-preview.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -23,12 +23,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="छठ महापर्व — सूर्य की आराधना | एक डिजिटल घाट">
 <meta name="twitter:description" content="डूबते और उगते सूर्य को नमन। पावन छठ गीत, गंगा में दीपदान व डिजिटल अर्घ्य।">
-<meta name="twitter:image" content="https://abhi9avx.github.io/assets/share-preview.jpg">
+<meta name="twitter:image" content="https://chhathparv.github.io/assets/share-preview.jpg">
 <link rel="icon" href="assets/sun-icon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/ghat-sandhya.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Hind:wght@300;400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=21">
-<script defer src="config.js?v=21"></script><script defer src="app.js?v=21"></script>
+<link rel="stylesheet" href="styles.css?v=22">
+<script defer src="config.js?v=21"></script><script defer src="app.js?v=22"></script>
 </head>
 <body data-scene="sandhya" class="notranslate" translate="no">
 <a class="skip" href="#meaning">मुख्य जानकारी पर जाएँ</a>
@@ -55,12 +56,6 @@
   <div class="hero-copy">
     <div class="hero-top-meta">
       <div class="festival-eyebrow"><span class="line"></span> ॥ जय छठी मैया ॥ <span class="line"></span></div>
-      <div class="hero-live-clock" aria-live="polite" title="वर्तमान लाइव समय">
-        <span class="clock-dot" aria-hidden="true"></span>
-        <span class="clock-label">वर्तमान समय</span>
-        <time id="liveGhatClock">--:--:--</time>
-        <small id="liveGhatDate"></small>
-      </div>
     </div>
     <p class="hero-overline">लोक आस्था का महापर्व</p>
     <h1 id="heroTitle">सूर्य की <em>आराधना,</em><br>छठ का <em>उत्सव।</em></h1>
@@ -151,15 +146,23 @@
 
     <p class="small-note">ध्वनि आपकी अनुमति से शुरू होगी • सबसे अच्छा अनुभव हेडफ़ोन के साथ</p>
   </div>
-  <div class="scene-switch" aria-label="घाट का समय चुनें">
-    <span class="scene-title">चुनें अपना घाट</span>
-    <button data-scene-btn="sandhya" class="is-active" aria-pressed="true"><span class="scene-icon">◑</span><span>संध्या अर्घ्य<small>सूर्यास्त</small></span></button>
-    <button data-scene-btn="usha" aria-pressed="false"><span class="scene-icon">☀</span><span>उषा अर्घ्य<small>सूर्योदय</small></span></button>
-    <button data-scene-btn="koshi" aria-pressed="false"><span class="scene-icon">✧</span><span>कोसी की रात<small>दीपों का उजाला</small></span></button>
-    <button data-scene-btn="fireworks" aria-pressed="false"><span class="scene-icon">✺</span><span>घाट आतिशबाज़ी<small>उत्सव व उमंग</small></span></button>
-    <button data-scene-btn="arpan" aria-pressed="false"><span class="scene-icon">🪔</span><span>महाअर्घ्य व सूप<small>पवित्र समर्पण</small></span></button>
-    <button data-scene-btn="bahangi" aria-pressed="false"><span class="scene-icon">🎍</span><span>बहंगी व दौरा<small>घाट शोभायात्रा</small></span></button>
-    <span class="scene-foot">SCENES · 01 / 06</span>
+  <div class="hero-side">
+    <div class="hero-live-clock" aria-live="polite" title="वर्तमान लाइव समय">
+      <span class="clock-dot" aria-hidden="true"></span>
+      <span class="clock-label">वर्तमान समय</span>
+      <time id="liveGhatClock">--:--:--</time>
+      <small id="liveGhatDate"></small>
+    </div>
+    <div class="scene-switch" aria-label="घाट का समय चुनें">
+      <span class="scene-title">चुनें अपना घाट</span>
+      <button data-scene-btn="sandhya" class="is-active" aria-pressed="true"><span class="scene-icon">◑</span><span>संध्या अर्घ्य<small>सूर्यास्त</small></span></button>
+      <button data-scene-btn="usha" aria-pressed="false"><span class="scene-icon">☀</span><span>उषा अर्घ्य<small>सूर्योदय</small></span></button>
+      <button data-scene-btn="koshi" aria-pressed="false"><span class="scene-icon">✧</span><span>कोसी की रात<small>दीपों का उजाला</small></span></button>
+      <button data-scene-btn="fireworks" aria-pressed="false"><span class="scene-icon">✺</span><span>घाट आतिशबाज़ी<small>उत्सव व उमंग</small></span></button>
+      <button data-scene-btn="arpan" aria-pressed="false"><span class="scene-icon">🪔</span><span>महाअर्घ्य व सूप<small>पवित्र समर्पण</small></span></button>
+      <button data-scene-btn="bahangi" aria-pressed="false"><span class="scene-icon">🎍</span><span>बहंगी व दौरा<small>घाट शोभायात्रा</small></span></button>
+      <span class="scene-foot">SCENES · 01 / 06</span>
+    </div>
   </div>
   <div class="hero-scroll"><span class="scroll-hair"></span> EXPLORE THE TRADITION</div>
 </section>
@@ -317,7 +320,7 @@
       <!-- Slide 1 -->
       <article class="story-slide active" data-slide="0">
         <div class="story-slide-image">
-          <img src="assets/story-sita-chhath.jpg" alt="माता सीता द्वारा प्रथम छठ अनुष्ठान" loading="lazy">
+          <picture><source srcset="assets/story-sita-chhath.webp" type="image/webp"><img src="assets/story-sita-chhath.jpg" alt="माता सीता द्वारा प्रथम छठ अनुष्ठान" loading="lazy" decoding="async"></picture>
           <span class="story-img-badge">रामायण कालीन इतिहास</span>
         </div>
         <div class="story-slide-copy">
@@ -336,7 +339,7 @@
       <!-- Slide 2 -->
       <article class="story-slide" data-slide="1">
         <div class="story-slide-image">
-          <img src="assets/story-draupadi-surya.jpg" alt="महारानी द्रौपदी द्वारा सूर्य देव की उपासना" loading="lazy">
+          <picture><source srcset="assets/story-draupadi-surya.webp" type="image/webp"><img src="assets/story-draupadi-surya.jpg" alt="महारानी द्रौपदी द्वारा सूर्य देव की उपासना" loading="lazy" decoding="async"></picture>
           <span class="story-img-badge">महाभारत कालीन आस्था</span>
         </div>
         <div class="story-slide-copy">
@@ -355,7 +358,7 @@
       <!-- Slide 3 -->
       <article class="story-slide" data-slide="2">
         <div class="story-slide-image">
-          <img src="assets/story-solar-health.jpg" alt="छठ अर्घ्य का वैज्ञानिक एवं स्वास्थ्य लाभ" loading="lazy">
+          <picture><source srcset="assets/story-solar-health.webp" type="image/webp"><img src="assets/story-solar-health.jpg" alt="छठ अर्घ्य का वैज्ञानिक एवं स्वास्थ्य लाभ" loading="lazy" decoding="async"></picture>
           <span class="story-img-badge">वैज्ञानिक दृष्टिकोण</span>
         </div>
         <div class="story-slide-copy">
@@ -374,7 +377,7 @@
       <!-- Slide 4 -->
       <article class="story-slide" data-slide="3">
         <div class="story-slide-image">
-          <img src="assets/story-nature-equality.jpg" alt="प्रकृति पूजा एवं सामाजिक समरसता" loading="lazy">
+          <picture><source srcset="assets/story-nature-equality.webp" type="image/webp"><img src="assets/story-nature-equality.jpg" alt="प्रकृति पूजा एवं सामाजिक समरसता" loading="lazy" decoding="async"></picture>
           <span class="story-img-badge">सामाजिक समरसता</span>
         </div>
         <div class="story-slide-copy">
@@ -409,7 +412,7 @@
       <p>प्रसाद में परंपरा, प्रकृति और स्वास्थ्य का अनूठा संगम है। किसी भी विकल्प पर क्लिक करके जानें।</p>
       <div class="offering-stage">
         <div class="offering-halo" aria-hidden="true"></div>
-        <div class="offering-image-wrap"><img src="assets/offering-thekua.jpg" alt="पारंपरिक ठेकुआ महाप्रसाद" class="offering-img" id="offeringImg" loading="lazy"></div>
+        <div class="offering-image-wrap"><img src="assets/offering-thekua.webp" alt="पारंपरिक ठेकुआ महाप्रसाद" class="offering-img" id="offeringImg" loading="lazy" decoding="async"></div>
         <div class="stage-caption" id="stageCaption">ठेकुआ महाप्रसाद • सूर्य चक्र अलंकरण</div>
       </div>
       <div class="offering-left-summary" id="offeringLeftSummary" aria-live="polite">

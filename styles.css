@@ -126,6 +126,7 @@ body.reduce-motion *::after {
   position: absolute;
   inset: 0;
   background-image: url('assets/ghat-sandhya.jpg');
+  background-image: image-set(url('assets/ghat-sandhya.webp') type('image/webp') 1x, url('assets/ghat-sandhya.jpg') type('image/jpeg') 1x);
   background-size: cover;
   background-position: 62% 38%;
   opacity: 1;
@@ -136,30 +137,35 @@ body.reduce-motion *::after {
 
 body[data-scene=usha] .photo-scene {
   background-image: url('assets/ghat-usha.jpg');
+  background-image: image-set(url('assets/ghat-usha.webp') type('image/webp') 1x, url('assets/ghat-usha.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=koshi] .photo-scene {
   background-image: url('assets/ghat-koshi-night.jpg');
+  background-image: image-set(url('assets/ghat-koshi-night.webp') type('image/webp') 1x, url('assets/ghat-koshi-night.jpg') type('image/jpeg') 1x);
   filter: saturate(1.18) contrast(1.05) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=fireworks] .photo-scene {
   background-image: url('assets/ghat-fireworks.jpg');
+  background-image: image-set(url('assets/ghat-fireworks.webp') type('image/webp') 1x, url('assets/ghat-fireworks.jpg') type('image/jpeg') 1x);
   filter: saturate(1.18) contrast(1.05) brightness(1.02);
   opacity: 1
 }
 
 body[data-scene=arpan] .photo-scene {
   background-image: url('assets/ghat-maha-arghya.jpg');
+  background-image: image-set(url('assets/ghat-maha-arghya.webp') type('image/webp') 1x, url('assets/ghat-maha-arghya.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=bahangi] .photo-scene {
   background-image: url('assets/ghat-bahangi.jpg');
+  background-image: image-set(url('assets/ghat-bahangi.webp') type('image/webp') 1x, url('assets/ghat-bahangi.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.02);
   opacity: 1
 }
@@ -879,6 +885,8 @@ body[data-scene=bahangi] .sun-orb {
 .hero-copy {
   padding-bottom: 0;
   max-width: 590px;
+  min-width: 0;
+  flex: 1;
   position: relative;
   z-index: 4
 }
@@ -1078,13 +1086,25 @@ body[data-scene=bahangi] .sun-orb {
   letter-spacing: .2px
 }
 
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin: 10px 0 0 18px;
+  position: relative;
+  z-index: 4
+}
+
 .scene-switch {
-  align-self: center;
+  align-self: flex-end;
   display: flex;
   flex-direction: column;
   gap: 3px;
   width: 215px;
-  margin: 18px 0 0 18px;
+  margin: 0;
   flex-shrink: 0;
   border: 1px solid rgba(255, 224, 178, .22);
   border-radius: 14px;
@@ -2951,7 +2971,22 @@ body[data-scene=bahangi] .sun-orb {
 
   .hero-copy {
     max-width: 100%;
+    width: 100%;
     padding: 0
+  }
+
+  .hero-side {
+    position: static;
+    width: 100%;
+    margin: 0;
+    align-items: stretch
+  }
+
+  .hero-live-clock {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 6
   }
 
   .hero h1 {
@@ -3169,7 +3204,7 @@ body[data-scene=bahangi] .sun-orb {
   .hero-top-meta {
     margin-bottom: 10px;
     gap: 6px 8px;
-    justify-content: space-between;
+    justify-content: flex-start;
     width: 100%
   }
 
@@ -3183,6 +3218,8 @@ body[data-scene=bahangi] .sun-orb {
   }
 
   .hero-live-clock {
+    top: 12px;
+    right: 14px;
     font-size: 11px;
     padding: 4px 9px;
     gap: 5px
@@ -3433,6 +3470,13 @@ body[data-scene=bahangi] .sun-orb {
     height: 30px;
     font-size: 15px
   }
+
+  .hero-live-clock {
+    top: 10px;
+    right: 10px;
+    font-size: 10.5px;
+    padding: 4px 8px
+  }
 }
 
 /* Final refinement: editorial playlist, action feedback and mobile accessibility */
@@ -3679,6 +3723,7 @@ body.panel-open {
 /* Ultra-HD photorealistic devotional imagery for Chhath Mahaparv */
 .photo-scene {
   background-image: url('assets/ghat-sandhya.jpg');
+  background-image: image-set(url('assets/ghat-sandhya.webp') type('image/webp') 1x, url('assets/ghat-sandhya.jpg') type('image/jpeg') 1x);
   background-repeat: no-repeat;
   background-color: #1c252a;
   background-position: 62% 38%;
@@ -3689,36 +3734,42 @@ body.panel-open {
 
 body[data-scene=usha] .photo-scene {
   background-image: url('assets/ghat-usha.jpg');
+  background-image: image-set(url('assets/ghat-usha.webp') type('image/webp') 1x, url('assets/ghat-usha.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=koshi] .photo-scene {
   background-image: url('assets/ghat-koshi-night.jpg');
+  background-image: image-set(url('assets/ghat-koshi-night.webp') type('image/webp') 1x, url('assets/ghat-koshi-night.jpg') type('image/jpeg') 1x);
   filter: saturate(1.18) contrast(1.05) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=fireworks] .photo-scene {
   background-image: url('assets/ghat-fireworks.jpg');
+  background-image: image-set(url('assets/ghat-fireworks.webp') type('image/webp') 1x, url('assets/ghat-fireworks.jpg') type('image/jpeg') 1x);
   filter: saturate(1.18) contrast(1.05) brightness(1.02);
   opacity: 1
 }
 
 body[data-scene=arpan] .photo-scene {
   background-image: url('assets/ghat-maha-arghya.jpg');
+  background-image: image-set(url('assets/ghat-maha-arghya.webp') type('image/webp') 1x, url('assets/ghat-maha-arghya.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.04);
   opacity: 1
 }
 
 body[data-scene=bahangi] .photo-scene {
   background-image: url('assets/ghat-bahangi.jpg');
+  background-image: image-set(url('assets/ghat-bahangi.webp') type('image/webp') 1x, url('assets/ghat-bahangi.jpg') type('image/jpeg') 1x);
   filter: saturate(1.14) contrast(1.04) brightness(1.02);
   opacity: 1
 }
 
 .story-photo {
   background-image: linear-gradient(8deg, rgba(4, 20, 25, .65), transparent 60%), url('assets/chhath-devotion.jpg');
+  background-image: linear-gradient(8deg, rgba(4, 20, 25, .65), transparent 60%), image-set(url('assets/chhath-devotion.webp') type('image/webp') 1x, url('assets/chhath-devotion.jpg') type('image/jpeg') 1x);
   background-position: center 25%;
   background-size: cover
 }
@@ -3830,31 +3881,37 @@ body[data-scene=koshi] .sun-orb {
 
 .jhanki-card.photo-evening {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .03) 75%), url('assets/ghat-sandhya.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .03) 75%), image-set(url('assets/ghat-sandhya.webp') type('image/webp') 1x, url('assets/ghat-sandhya.jpg') type('image/jpeg') 1x);
   background-position: center, center 42%
 }
 
 .jhanki-card.photo-morning {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .85), rgba(0, 0, 0, .08) 75%), url('assets/ghat-usha.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .85), rgba(0, 0, 0, .08) 75%), image-set(url('assets/ghat-usha.webp') type('image/webp') 1x, url('assets/ghat-usha.jpg') type('image/jpeg') 1x);
   background-position: center, center 45%
 }
 
 .jhanki-card.photo-koshi {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .18) 75%), url('assets/ghat-koshi-night.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .18) 75%), image-set(url('assets/ghat-koshi-night.webp') type('image/webp') 1x, url('assets/ghat-koshi-night.jpg') type('image/jpeg') 1x);
   background-position: center, center 32%
 }
 
 .jhanki-card.photo-fireworks {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .08) 75%), url('assets/ghat-fireworks.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .08) 75%), image-set(url('assets/ghat-fireworks.webp') type('image/webp') 1x, url('assets/ghat-fireworks.jpg') type('image/jpeg') 1x);
   background-position: center, center 40%
 }
 
 .jhanki-card.photo-maha-arghya {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .08) 75%), url('assets/ghat-maha-arghya.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .08) 75%), image-set(url('assets/ghat-maha-arghya.webp') type('image/webp') 1x, url('assets/ghat-maha-arghya.jpg') type('image/jpeg') 1x);
   background-position: center, center 35%
 }
 
 .jhanki-card.photo-bahangi {
   background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .06) 75%), url('assets/ghat-bahangi.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .06) 75%), image-set(url('assets/ghat-bahangi.webp') type('image/webp') 1x, url('assets/ghat-bahangi.jpg') type('image/jpeg') 1x);
   background-position: center, center 42%
 }
 
@@ -4169,19 +4226,23 @@ body.reduce-motion .plate {
 
 /* Atmosphere-specific ultra HD scenes */
 body[data-scene="usha"] .photo-scene {
-  background-image: url('assets/ghat-usha.jpg')
+  background-image: url('assets/ghat-usha.jpg');
+  background-image: image-set(url('assets/ghat-usha.webp') type('image/webp') 1x, url('assets/ghat-usha.jpg') type('image/jpeg') 1x)
 }
 
 body[data-scene="koshi"] .photo-scene {
-  background-image: url('assets/ghat-koshi-night.jpg')
+  background-image: url('assets/ghat-koshi-night.jpg');
+  background-image: image-set(url('assets/ghat-koshi-night.webp') type('image/webp') 1x, url('assets/ghat-koshi-night.jpg') type('image/jpeg') 1x)
 }
 
 .jhanki-card.photo-morning {
-  background-image: linear-gradient(0deg, rgba(10, 20, 18, .85), rgba(0, 0, 0, .08) 75%), url('assets/ghat-usha.jpg')
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .85), rgba(0, 0, 0, .08) 75%), url('assets/ghat-usha.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .85), rgba(0, 0, 0, .08) 75%), image-set(url('assets/ghat-usha.webp') type('image/webp') 1x, url('assets/ghat-usha.jpg') type('image/jpeg') 1x)
 }
 
 .jhanki-card.photo-koshi {
-  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .18) 75%), url('assets/ghat-koshi-night.jpg')
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .18) 75%), url('assets/ghat-koshi-night.jpg');
+  background-image: linear-gradient(0deg, rgba(10, 20, 18, .87), rgba(0, 0, 0, .18) 75%), image-set(url('assets/ghat-koshi-night.webp') type('image/webp') 1x, url('assets/ghat-koshi-night.jpg') type('image/jpeg') 1x)
 }
 
 /* Offering Image Smooth Transition */
