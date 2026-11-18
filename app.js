@@ -598,10 +598,10 @@
   }
   all('[data-scene-btn]').forEach(b=>b.onclick=()=>scene(b.dataset.sceneBtn));
 
-  let liveDevoteeCount = Math.floor(Math.random() * 4);
+  let liveDevoteeCount = 1 + Math.floor(Math.random() * 3);
   function updateDevoteeCount(){
     const drift = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
-    liveDevoteeCount = clamp(liveDevoteeCount + drift, 0, 3);
+    liveDevoteeCount = clamp(liveDevoteeCount + drift, 1, 3);
     updateFestivalStatus();
   }
   function updateFestivalStatus(){
