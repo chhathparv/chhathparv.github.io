@@ -598,16 +598,17 @@
   }
   all('[data-scene-btn]').forEach(b=>b.onclick=()=>scene(b.dataset.sceneBtn));
 
-  let liveDevoteeCount = 18 + Math.floor(Math.random() * 5);
+  let liveDevoteeCount = Math.floor(Math.random() * 4);
   function updateDevoteeCount(){
-    const drift = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
-    liveDevoteeCount = clamp(liveDevoteeCount + drift, 16, 28);
+    const drift = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+    liveDevoteeCount = clamp(liveDevoteeCount + drift, 0, 3);
     updateFestivalStatus();
   }
   function updateFestivalStatus(){
     const textEl = byId('ambienceText');
     if(textEl) textEl.textContent = `${liveDevoteeCount} श्रद्धालु लाइव जुड़े हैं`;
   }
+  updateFestivalStatus();
   setInterval(updateDevoteeCount, 60000); // Updated once every 1 minute
 
   function updateLiveGhatClock(){
